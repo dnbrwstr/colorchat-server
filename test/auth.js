@@ -1,0 +1,133 @@
+require('dotenv').load();
+require('babel/register');
+
+var sinon = require('sinon'),
+  sinonAsPromised = require('sinon-as-promised'),
+  expect = require('chai').expect,
+  request = require('supertest-as-promised'),
+  Promise = require('bluebird'),
+  app = require('../src/app'),
+  sequelize = require('../src/lib/sequelize'),
+  NumberConfirmation = require('../src/models/NumberConfirmation'),
+  twilio = require('../src/lib/twilio');
+
+describe('auth', function () {
+  var agent;
+
+  before(function (done) {
+    agent = request.agent(app);
+    sequelize.options.logging = null;
+
+    sequelize.sync({ force: true}).then(function () {
+      done();
+    });
+  })
+
+  describe('/auth', function () {
+    var sendConfirmationCodeStub;
+
+    before(function () {
+      sendConfirmationCodeStub = sinon.stub(twilio, 'sendConfirmationCode').resolves();
+    });
+
+    it('Throws an error if no phone number is passed', function (done) {
+      agent.post('/auth')
+        .send({number: ''})
+        .expect(400)
+        .end(done);
+    });
+
+    it('Creates a NumberConfirmation if a message is sent successfully', function (done) {
+      agent.post('/auth')
+        .send({number: '+14013911814'})
+        .expect(200)
+        .end(function (err, res) {
+          if (err) throw err;
+
+          return NumberConfirmation.findAll().then(function (confirmations) {
+            expect(confirmations.length).to.equal(1);
+            done();
+          });
+        });
+    });
+
+    describe('with Twilio error', function () {
+
+      before(function () {
+        sendConfirmationCodeStub.rejects(new Error());
+      });
+
+      it('Throws an error if the Twilio request fails', function (done) {
+        agent.post('/auth')
+          .send({number: '+14013911814'})
+          .expect(500)
+          .end(done);
+      });
+    });
+
+    after(function () {
+      sendConfirmationCodeStub.restore();
+    });
+  });
+
+  describe('/auth/confirm', function () {
+    before(function (done) {
+      sequelize.sync({ force: true}).then(function () {
+        NumberConfirmation.bulkCreate([{
+          number: '+14013911814',
+          code: '555555'
+        }, {
+          number: '+15555555',
+          code: '666666'
+        }]).then(function () {
+          done();
+        });
+      });
+    });
+
+    it('Throws an error if invalid credentials are submitted', function (done) {
+      agent.post('/auth/confirm')
+        .send({
+          number: '+14013911814',
+          code: '555554'
+        })
+        .expect(403)
+        .end(done);
+    });
+
+    it('Returns an auth token if valid credentials are submitted', function (done) {
+      agent.post('/auth/confirm')
+        .send({
+          number: '+14013911814',
+          code: '555555'
+        })
+        .expect(200)
+        .end(function (err, res) {
+          if (err) throw err;
+
+          expect(res.body).to.have.key('token');
+          done();
+        });
+    });
+
+    it('Destroys a confirmation after 6 failed attempts to confirm', function (done) {
+      Promise.all([0,1,2,3,4,5,6,7].map(function () {
+        return agent.post('/auth/confirm')
+          .send({
+            number: '+15555555',
+            code: '555555'
+          });;
+      })).catch(function () {
+        return NumberConfirmation.findAll({
+          where: {
+            number: '+15555555'
+          }
+        }).then(function (res) {
+          expect(res).to.be.empty
+          done();
+        });
+      });
+    });
+
+  });
+});
