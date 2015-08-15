@@ -99,7 +99,7 @@ describe('auth', function () {
       agent.post('/auth/confirm')
         .send({
           number: '+14013911814',
-          code: '555555'
+          code: 555555
         })
         .expect(200)
         .end(function (err, res) {

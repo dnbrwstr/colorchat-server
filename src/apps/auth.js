@@ -29,13 +29,15 @@ app.post('/', wrapAsyncRoute(async function (req, res, next) {
 }));
 
 app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
-  if (!req.body.number || !req.body.code) {
+  let { number, code } = req.body;
+
+  if (!number || !code) {
     throw new RequestError('Missing required input');
   }
 
   let confirmation = await NumberConfirmation.attemptValidationWhere({
-    number: req.body.number,
-    code: req.body.code
+    number: number,
+    code: code.toString()
   });
 
   let user = await User.createFromConfirmation(confirmation);
