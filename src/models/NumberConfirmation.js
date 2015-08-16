@@ -57,7 +57,8 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
         } else {
           await confirmation.update({
             code: code,
-            codeLocked: false
+            codeLocked: false,
+            attempts: 0
           });
 
           return confirmation;
