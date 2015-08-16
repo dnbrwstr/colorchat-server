@@ -11,6 +11,18 @@ var sinon = require('sinon'),
   NumberConfirmation = require('../src/models/NumberConfirmation'),
   twilio = require('../src/lib/twilio');
 
+var mapTimes = function (n, fn) {
+  var res = [];
+  for (var i = 0; i < n; ++i) {
+    res.push(fn(i));
+  }
+  return res;
+}
+
+var defaultNumberData = {
+  number: '+14013911814'
+};
+
 describe('auth', function () {
   var agent;
 
@@ -39,7 +51,7 @@ describe('auth', function () {
 
     it('Creates a NumberConfirmation if a message is sent successfully', function (done) {
       agent.post('/auth')
-        .send({number: '+14013911814'})
+        .send(defaultNumberData)
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
@@ -51,22 +63,44 @@ describe('auth', function () {
         });
     });
 
-    describe('with Twilio error', function () {
+    it('Updates confirmation code when additional requests are sent', function (done) {
+      NumberConfirmation.find(defaultNumberData).then(function (confirmation) {
+        var startCode = confirmation.code;
 
-      before(function () {
-        sendConfirmationCodeStub.rejects(new Error());
-      });
-
-      it('Throws an error if the Twilio request fails', function (done) {
         agent.post('/auth')
-          .send({number: '+14013911814'})
-          .expect(500)
-          .end(done);
+          .send(defaultNumberData)
+          .end(function () {
+            NumberConfirmation.findAll({ where: defaultNumberData }).then(function (res) {
+              expect(res.length).to.equal(1);
+              expect(res[0].code).to.not.equal(startCode);
+              done();
+            });
+          });
       });
     });
 
-    after(function () {
-      sendConfirmationCodeStub.restore();
+    it('Throws an error if the Twilio request fails', function (done) {
+      sendConfirmationCodeStub.rejects(new Error());
+
+      agent.post('/auth')
+        .send(defaultNumberData)
+        .expect(500)
+        .end(function (err, res) {
+          sendConfirmationCodeStub.restore();
+          done(err);
+        });
+    });
+
+    it('Locks code creation after 20 attempts', function (done) {
+      Promise.all(mapTimes(21, function () {
+        return agent.post('/auth')
+          .send(defaultNumberData)
+      })).catch(function () {
+        NumberConfirmation.find({where: defaultNumberData}).then(function (res) {
+          expect(res.numberLocked).to.be.ok
+          done();
+        });
+      });
     });
   });
 
@@ -110,20 +144,20 @@ describe('auth', function () {
         });
     });
 
-    it('Destroys a confirmation after 6 failed attempts to confirm', function (done) {
-      Promise.all([0,1,2,3,4,5,6,7].map(function () {
+    it('Locks code after 6 failed attempts to confirm', function (done) {
+      Promise.all(mapTimes(7, function () {
         return agent.post('/auth/confirm')
           .send({
             number: '+15555555',
             code: '555555'
-          });;
+          });
       })).catch(function () {
-        return NumberConfirmation.findAll({
+        return NumberConfirmation.find({
           where: {
             number: '+15555555'
           }
         }).then(function (res) {
-          expect(res).to.be.empty
+          expect(res.codeLocked).to.be.ok
           done();
         });
       });

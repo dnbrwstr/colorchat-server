@@ -9,16 +9,12 @@ let app = express();
 
 app.post('/', wrapAsyncRoute(async function (req, res, next) {
   let number = req.body.number;
-  let code = Math.floor(Math.random() * 999999).toString();
 
   if (!number) {
     throw new RequestError('Missing phone number');
   }
 
-  let confirmation = await NumberConfirmation.create({
-    number: number,
-    code: code
-  });
+  let confirmation = await NumberConfirmation.createOrUpdateFromNumber(number);
 
   await twilio.sendConfirmationCode({
     code: confirmation.code,
