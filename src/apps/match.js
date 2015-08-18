@@ -7,19 +7,23 @@ import { normalize } from '../lib/PhoneNumberUtils';
 
 let app = express();
 
-let processNumbers = (numbers, baseNumber) => numbers.reduce((memo, n, i) => {
-  if (n instanceof Array) {
-    memo.numbers = memo.numbers.concat(n);
-    n.forEach(o => memo.numberMap[o] = i);
-  } else {
-    memo.numbers = memo.numbers.concat([n]);
-    memo.numberMap[n] = i;
-  }
-  return memo;
-}, {
-  numbers: [],
-  numberMap: {}
-});
+let processNumbers = (numbers, baseNumber) => {
+  let numberData = numbers.reduce((memo, n, i) => {
+    if (n instanceof Array) {
+      memo.numbers = memo.numbers.concat(n);
+      n.forEach(o => memo.numberMap[o] = i);
+    } else {
+      memo.numbers = memo.numbers.concat([n]);
+      memo.numberMap[n] = i;
+    }
+    return memo;
+  }, {
+    numbers: [],
+    numberMap: {}
+  });
+  numberData.numbers = numberData.numbers.filter(n => !!n);
+  return numberData;
+};
 
 app.post('/', [authenticate], wrapAsyncRoute(async (req, res, next) => {
   let { numbers, numberMap } = processNumbers(normalize(req.body.numbers, req.user.number));

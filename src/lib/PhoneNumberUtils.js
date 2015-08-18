@@ -21,10 +21,11 @@ let normalizeWithPermutations = (number, baseNumber) => {
 
 let _normalize = (number, userNumber) => {
   let baseNumberData = parse(userNumber);
-  let parsedNumberData = parse(number, baseNumberData.region);
+  let baseRegion = baseNumberData ? baseNumberData.region : defaultRegion;
+  let parsedNumberData = parse(number, baseRegion);
 
   return parsedNumberData ?
-    makeString(maybeCopyDestinationCode(parsedNumberData, baseNumberData)) : null;
+    makeString(maybeCopyDestinationCode(parsedNumberData, { region: baseRegion })) : null;
 }
 
 let parse = (numberToParse, region=defaultRegion) => {
