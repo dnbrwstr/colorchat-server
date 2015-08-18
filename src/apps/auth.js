@@ -1,9 +1,10 @@
 let express = require('express'),
   twilio = require('../lib/twilio'),
   wrapAsyncRoute = require('../lib/wrapAsyncRoute'),
-  RequestError = require('../lib/errors').Request,
   NumberConfirmation = require('../models/NumberConfirmation'),
   User = require('../models/User');
+
+import { RequestError } from '../lib/errors';
 
 let app = express();
 

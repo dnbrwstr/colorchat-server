@@ -9,15 +9,8 @@ var sinon = require('sinon'),
   app = require('../src/app'),
   sequelize = require('../src/lib/sequelize'),
   NumberConfirmation = require('../src/models/NumberConfirmation'),
-  twilio = require('../src/lib/twilio');
-
-var mapTimes = function (n, fn) {
-  var res = [];
-  for (var i = 0; i < n; ++i) {
-    res.push(fn(i));
-  }
-  return res;
-}
+  twilio = require('../src/lib/twilio'),
+  mapTimes = require('../src/lib/Util').mapTimes;
 
 var defaultNumberData = {
   number: '+14013911814'
@@ -33,7 +26,7 @@ describe('auth', function () {
     sequelize.sync({ force: true}).then(function () {
       done();
     });
-  })
+  });
 
   describe('/auth', function () {
     var sendConfirmationCodeStub;

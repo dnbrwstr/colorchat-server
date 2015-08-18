@@ -6,17 +6,18 @@ class BaseError extends Error {
   }
 }
 
-module.exports = {
-  Request: class RequestError extends BaseError {
-    get status () { return 400 }
-  },
-  Permissions: class PermissionsError extends BaseError {
-    get status () { return 403 }
-  },
-  NotFound: class NotFoundError extends BaseError {
-    get status () { return 404 }
-  },
-  Server: class ServerError extends BaseError {
-    get status () { return 500 }
-  }
-};
+export class RequestError extends BaseError {
+  get status () { return 400 }
+}
+
+export class PermissionsError extends BaseError {
+  get status () { return 403 }
+}
+
+export class NotFoundError extends BaseError {
+  get status () { return 404 }
+}
+
+export class ServerError extends BaseError {
+  get status () { return 500 }
+}

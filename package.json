@@ -15,6 +15,7 @@
     "body-parser": "^1.13.3",
     "dotenv": "^1.2.0",
     "express": "^4.13.3",
+    "google-libphonenumber": "^1.0.4",
     "pg": "^4.4.1",
     "pg-hstore": "^2.3.2",
     "sequelize": "^3.5.1",

@@ -1,6 +1,7 @@
 let Sequelize = require('sequelize'),
-  PermissionsError = require('../lib/errors').Permissions,
   sequelize = require('../lib/sequelize');
+
+import { PermissionsError } from '../lib/errors';
 
 let maxCodesCreated = 20;
 let maxConfirmationAttempts = 6;
