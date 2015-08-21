@@ -25,7 +25,7 @@ let _normalize = (number, userNumber) => {
   let parsedNumberData = parse(number, baseRegion);
 
   return parsedNumberData ?
-    makeString(maybeCopyDestinationCode(parsedNumberData, { region: baseRegion })) : null;
+    makeString(maybeCopyDestinationCode(parsedNumberData, baseNumberData)) : null;
 }
 
 let parse = (numberToParse, region=defaultRegion) => {
@@ -39,9 +39,9 @@ let parse = (numberToParse, region=defaultRegion) => {
 
   let destinationCodeLength = numberUtil.getLengthOfNationalDestinationCode(number);
   let nationalNumber = number.getNationalNumber();
-  let baseNumber = parseInt(nationalNumber.toString().slice(destinationCodeLength));
+  let baseNumber = nationalNumber.toString().slice(destinationCodeLength);
   let destinationCode = destinationCodeLength ?
-    parseInt(nationalNumber.toString().slice(0, destinationCodeLength)) : null;
+    nationalNumber.toString().slice(0, destinationCodeLength) : null;
 
   return numberUtil.isPossibleNumber(number) ? {
     countryCode: number.getCountryCodeOrDefault(),
