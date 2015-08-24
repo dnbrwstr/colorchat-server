@@ -40,7 +40,11 @@ app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
   let user = await User.createFromConfirmation(confirmation);
 
   res.json({
-    token: user.tokens.pop()
+    user: {
+      id: user.id,
+      token: user.tokens.pop(),
+      number: user.number
+    }
   });
 }));
 

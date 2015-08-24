@@ -132,7 +132,8 @@ describe('auth', function () {
         .end(function (err, res) {
           if (err) throw err;
 
-          expect(res.body).to.have.key('token');
+          expect(res.body).to.have.key('user');
+          expect(res.body.user).to.have.all.keys(['token', 'number', 'id']);
           done();
         });
     });
