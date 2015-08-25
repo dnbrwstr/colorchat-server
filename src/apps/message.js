@@ -2,26 +2,35 @@ import io from 'socket.io';
 import { PermissionsError, RequestError } from '../lib/errors';
 import User from '../models/User';
 import Message from '../models/Message';
+import logError from '../lib/logError';
 
 let userSockets = {};
 
 let app = io();
 
 let wrap = fn => (socket, next) => {
-  fn.apply(null, [socket, next]).catch(e => console.log(e));
+  fn.apply(null, [socket, next]).catch(e => {
+    logError(e);
+    next(e);
+  });
 }
+
+app.use(function (socket, next) {
+  socket.on('error', logError);
+  next();
+})
 
 app.use(wrap(async function (socket, next) {
   let token = socket.handshake.query.token;
 
   if (!token) {
-    return next(new RequestError('Missing token'));
+    throw new RequestError('Missing token');
   }
 
   let user = await User.findByToken(token);
 
   if (!user) {
-    return next(new PermissionsError('Invalid token'));
+    throw new PermissionsError('Invalid token');
   } else {
     socket.user = user;
     return next();
@@ -37,17 +46,20 @@ app.on('connection', wrap(async function (socket) {
     messages.forEach(m => m.destroy());
   });
 
-  socket.on('message', function (messageData, cb) {
+  socket.on('message', wrap(async function (messageData, cb) {
     messageData.senderId = socket.user.id;
 
-    if (userSockets[messageData.recipientId]) {
-      userSockets[messageData.recipientId].emit('message', messageData);
-    } else {
-      Message.create(messageData);
-    }
+    let message = await Message.create(messageData);
 
-    if (cb) cb();
-  });
+    if (userSockets[messageData.recipientId]) {
+      userSockets[messageData.recipientId].emit('message', message, function () {
+        message.destroy();
+        if (cb) cb(message);
+      });
+    } else {
+      if (cb) cb(message);
+    }
+  }));
 
   socket.on('disconnect', function () {
     delete userSockets[socket.user.id];

@@ -1,5 +1,6 @@
-var Sequelize = require('sequelize');
+import Sequelize from 'sequelize';
+import chalk from 'chalk';
 
-module.exports = new Sequelize(process.env.DATABASE_URL);
-
-require('../models');
+export default new Sequelize(process.env.DATABASE_URL, {
+  logging: msg => console.log(chalk.grey(msg))
+});
