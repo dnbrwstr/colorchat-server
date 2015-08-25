@@ -1,5 +1,4 @@
-require('dotenv').load();
-require('babel/register');
+require('./helpers/configure');
 
 var sinon = require('sinon'),
   expect = require('chai').expect;

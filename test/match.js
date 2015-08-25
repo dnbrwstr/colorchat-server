@@ -1,12 +1,11 @@
-require('dotenv').load();
-require('babel/register');
+require('./helpers/configure');
 
 var sinon = require('sinon'),
   sinonAsPromised = require('sinon-as-promised'),
   expect = require('chai').expect,
   request = require('supertest-as-promised'),
   Promise = require('bluebird'),
-  app = require('../src/app'),
+  app = require('../src/apps/main'),
   sequelize = require('../src/lib/sequelize'),
   User = require('../src/models/User');
 

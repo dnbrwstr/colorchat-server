@@ -1,10 +1,8 @@
-require('./lib/promisify');
-
 let express = require('express'),
   bodyParser = require('body-parser'),
-  authApp = require('./apps/auth'),
-  matchApp = require('./apps/match'),
-  RequestError = require('./lib/errors').Request;
+  authApp = require('./auth'),
+  matchApp = require('./match'),
+  RequestError = require('../lib/errors').Request;
 
 let app = express();
 
