@@ -10,7 +10,7 @@ let seed = async () => {
 
   let userData = SeedNumbers.slice(0, 10).map(n => ({
     number: normalize(n),
-    tokens: ['111']
+    tokens: [normalize(n)]
   }));
 
   await User.bulkCreate(userData);
