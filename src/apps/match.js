@@ -2,7 +2,6 @@ import express from 'express';
 import wrapAsyncRoute from '../lib/wrapAsyncRoute';
 import authenticate from '../lib/authenticate';
 import User from '../models/User';
-import Sequelize from '../lib/Sequelize';
 import { normalize } from '../lib/PhoneNumberUtils';
 
 let app = express();

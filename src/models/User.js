@@ -1,8 +1,8 @@
 import Sequelize from 'sequelize';
 import crypto from 'crypto';
-import sequelize from '../lib/Sequelize';
+import db from '../lib/db';
 
-var User = sequelize.define('User', {
+var User = db.define('User', {
   phoneNumber: {
     type: Sequelize.STRING,
     required: true,
@@ -37,7 +37,7 @@ var User = sequelize.define('User', {
     wherePhoneNumberIn: async numbers => {
       let numberString = numbers.map(n => `'${n.replace(/[^\+0-9]/g, '')}'`).join(', ');
       let queryString = `select * from "Users" where "phoneNumber" like any (array[${numberString}])`;
-      let matches = await sequelize.query(queryString, {
+      let matches = await db.query(queryString, {
         model: User
       });
 

@@ -1,7 +1,7 @@
 let Sequelize = require('sequelize'),
-  sequelize = require('../lib/Sequelize');
+  db = require('../lib/db');
 
-let Message = sequelize.define('Message', {
+let Message = db.define('Message', {
   senderId: {
     type: Sequelize.INTEGER,
     required: true

@@ -1,12 +1,12 @@
 let Sequelize = require('sequelize'),
-  sequelize = require('../lib/Sequelize');
+  db = require('../lib/db');
 
 import { PermissionsError } from '../lib/errors';
 
 let maxCodesCreated = 20;
 let maxConfirmationAttempts = 6;
 
-let ConfirmationCode = sequelize.define('ConfirmationCode', {
+let ConfirmationCode = db.define('ConfirmationCode', {
   phoneNumber: {
     type: Sequelize.STRING,
     required: true
