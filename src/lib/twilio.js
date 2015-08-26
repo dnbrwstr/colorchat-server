@@ -6,7 +6,7 @@ var client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKE
 module.exports = {
   sendConfirmationCode: function (options) {
     return client.sms.messages.post({
-      to: options.number,
+      to: options.phoneNumber,
       from: process.env.TWILIO_NUMBER,
       body: 'Your ColorChat confirmation code is ' + options.code
     });

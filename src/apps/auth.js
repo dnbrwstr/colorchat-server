@@ -9,7 +9,7 @@ import { RequestError } from '../lib/errors';
 let app = express();
 
 app.post('/', wrapAsyncRoute(async function (req, res, next) {
-  let number = req.body.number;
+  let number = req.body.phoneNumber;
 
   if (!number) {
     throw new RequestError('Missing phone number');
@@ -19,31 +19,31 @@ app.post('/', wrapAsyncRoute(async function (req, res, next) {
 
   await twilio.sendConfirmationCode({
     code: confirmation.code,
-    number: confirmation.number
+    phoneNumber: confirmation.phoneNumber
   });
 
   res.status(200).send();
 }));
 
 app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
-  let { number, code } = req.body;
+  let { phoneNumber, code } = req.body;
 
-  if (!number || !code) {
+  if (!phoneNumber || !code) {
     throw new RequestError('Missing required input');
   }
 
   let confirmation = await NumberConfirmation.attemptValidationWhere({
-    number: number,
+    phoneNumber: phoneNumber,
     code: code.toString()
   });
 
-  let user = await User.createFromConfirmation(confirmation);
+  let user = await User.createOrUpdateFromConfirmation(confirmation);
 
   res.json({
     user: {
       id: user.id,
       token: user.tokens.pop(),
-      number: user.number
+      phoneNumber: user.phoneNumber
     }
   });
 }));

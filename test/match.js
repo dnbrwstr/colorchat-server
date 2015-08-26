@@ -26,16 +26,16 @@ var numbersWithoutMatching = [
 
 var users = [
   {
-    number: '+18885551212',
+    phoneNumber: '+18885551212',
     tokens: ['222222']
   }, {
-    number: '+14085553514',
+    phoneNumber: '+14085553514',
     tokens: ['333333']
   }, {
-    number: '+15556106679',
+    phoneNumber: '+15556106679',
     tokens: ['444444']
   }, {
-    number: '+15555555',
+    phoneNumber: '+15555555',
     tokens: ['555555']
   }
 ]
@@ -69,7 +69,7 @@ describe('Contact matching', function () {
     it('Returns matches if they exist', function (done) {
       agent.post('/match')
         .set(authHeaders)
-        .send({ numbers: numbersWithMatching })
+        .send({ phoneNumbers: numbersWithMatching })
         .expect(200)
         .end(function (err, res) {
           if (err) done(err);
@@ -86,7 +86,7 @@ describe('Contact matching', function () {
     it('Returns an empty array if no matches exist', function (done) {
       agent.post('/match')
         .set(authHeaders)
-        .send({ numbers: numbersWithoutMatching })
+        .send({ phoneNumbers: numbersWithoutMatching })
         .expect(200)
         .end(function (err, res) {
           if (err) done(err);

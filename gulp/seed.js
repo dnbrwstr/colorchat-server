@@ -9,7 +9,7 @@ let seed = async () => {
   });
 
   let userData = SeedNumbers.slice(0, 10).map(n => ({
-    number: normalize(n),
+    phoneNumber: normalize(n),
     tokens: [normalize(n)]
   }));
 

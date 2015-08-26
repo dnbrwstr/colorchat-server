@@ -3,7 +3,7 @@ import crypto from 'crypto';
 import sequelize from '../lib/sequelize';
 
 var User = sequelize.define('User', {
-  number: {
+  phoneNumber: {
     type: Sequelize.STRING,
     required: true,
     unique: true
@@ -14,11 +14,11 @@ var User = sequelize.define('User', {
   }
 }, {
   classMethods: {
-    createFromConfirmation: async confirmation => {
+    createOrUpdateFromConfirmation: async confirmation => {
       let tokenBuffer = await crypto.randomBytesAsync(64)
       let token = tokenBuffer.toString('hex');
 
-      let user = await User.find({ where: { number: confirmation.number } });
+      let user = await User.find({ where: { phoneNumber: confirmation.phoneNumber } });
 
       if (user) {
         user = await user.update({
@@ -26,7 +26,7 @@ var User = sequelize.define('User', {
         });
       } else {
         user = await User.create({
-          number: confirmation.number,
+          phoneNumber: confirmation.phoneNumber,
           tokens: [token]
         });
       }
@@ -34,9 +34,9 @@ var User = sequelize.define('User', {
       return user;
     },
 
-    whereNumberIn: async numbers => {
+    wherePhoneNumberIn: async numbers => {
       let numberString = numbers.map(n => `'${n.replace(/[^\+0-9]/g, '')}'`).join(', ');
-      let queryString = `select * from "Users" where number like any (array[${numberString}])`;
+      let queryString = `select * from "Users" where "phoneNumber" like any (array[${numberString}])`;
       let matches = await sequelize.query(queryString, {
         model: User
       });

@@ -7,7 +7,7 @@ let maxCodesCreated = 20;
 let maxConfirmationAttempts = 6;
 
 let NumberConfirmation = sequelize.define('NumberConfirmation', {
-  number: {
+  phoneNumber: {
     type: Sequelize.STRING,
     required: true
   },
@@ -30,19 +30,19 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
     required: true,
     defaultValue: false
   },
-  numberLocked: {
+  phoneNumberLocked: {
     type: Sequelize.BOOLEAN,
     require: true,
     defaultValue: false
   }
 }, {
   classMethods: {
-    createOrUpdateFromNumber: async function (number) {
-      let confirmation = await NumberConfirmation.findWithNumber(number);
+    createOrUpdateFromNumber: async function (phoneNumber) {
+      let confirmation = await NumberConfirmation.findWithNumber(phoneNumber);
       let code = Math.floor(Math.random() * 999999).toString();
 
       if (confirmation) {
-        if (confirmation.numberLocked) {
+        if (confirmation.phoneNumberLocked) {
           throw new PermissionsError('You have created the maximum number of confirmation codes');
         }
 
@@ -51,7 +51,7 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
 
         if (confirmation.codesCreated >= maxCodesCreated) {
           await confirmation.update({
-            numberLocked: true
+            phoneNumberLocked: true
           });
 
           throw new PermissionsError('You have created the maximum number of confirmation codes');
@@ -67,13 +67,13 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
       } else {
         return NumberConfirmation.create({
           code: code,
-          number: number
+          phoneNumber: phoneNumber
         });
       }
     },
 
     attemptValidationWhere: async function (data) {
-      let confirmation = await NumberConfirmation.findWithNumber(data.number);
+      let confirmation = await NumberConfirmation.findWithNumber(data.phoneNumber);
 
       if (!confirmation) {
         throw new PermissionsError('No matching confirmation found');
@@ -98,7 +98,7 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
       }
     },
 
-    findWithNumber: (number) => NumberConfirmation.find({ where: { number: number } })
+    findWithNumber: (phoneNumber) => NumberConfirmation.find({ where: { phoneNumber } })
   }
 
 });
