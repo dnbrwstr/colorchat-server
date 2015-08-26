@@ -1,10 +1,10 @@
 import SeedNumbers from './data/SeedNumbers';
-import sequelize from '../src/lib/sequelize';
+import db from '../src/lib/db';
 import User from '../src/models/User';
 import { normalize } from '../src/lib/PhoneNumberUtils'
 
 let seed = async () => {
-  await sequelize.sync({
+  await db.sync({
     force: true
   });
 
@@ -15,7 +15,7 @@ let seed = async () => {
 
   await User.bulkCreate(userData);
 
-  sequelize.close();
+  db.close();
 }
 
-export default seed
+export default seed;

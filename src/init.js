@@ -7,6 +7,6 @@ require('./lib/promisify');
 var db = require('./lib/db'),
   createServer = require('./lib/createServer');
 
-Sequelize.sync().then(function () {
+db.sync().then(function () {
   createServer();
 });

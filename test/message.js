@@ -9,7 +9,7 @@ var sinon = require('sinon'),
   expect = require('chai').expect,
   request = require('supertest-as-promised'),
   Promise = require('bluebird'),
-  sequelize = require('../src/lib/sequelize'),
+  db = require('../src/lib/db'),
   User = require('../src/models/User'),
   Message = require('../src/models/Message');
 
@@ -68,11 +68,11 @@ describe('messaging', function () {
   };
 
   beforeEach(function (done) {
-    sequelize.options.logging = null;
+    db.options.logging = null;
 
-    sequelize.sync({ force: true}).then(function () {
+    db.sync({ force: true}).then(function () {
       User.bulkCreate(testUserData).then(function () {
-        // Sequelize doesn't return autoincremented
+        // db doesn't return autoincremented
         // ids after bulk create
         User.findAll().then(function (_users) {
           users = _users;
@@ -149,7 +149,7 @@ describe('messaging', function () {
   it('Passes pending messages when client connects', function (done) {
     var firstClient = clientForUser(0).on('connect', function () {
       var cb = runOnAttempt(3, function () {
-        clientForUser(1).on('pending', function (messages) {
+        clientForUser(1).on('pending', function (messages, cb) {
           expect(messages.length).to.equal(3);
           done();
         });

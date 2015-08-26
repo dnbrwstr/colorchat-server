@@ -6,7 +6,7 @@ var sinon = require('sinon'),
   request = require('supertest-as-promised'),
   Promise = require('bluebird'),
   app = require('../src/apps/main'),
-  sequelize = require('../src/lib/sequelize'),
+  db = require('../src/lib/db'),
   User = require('../src/models/User');
 
 var numbersWithMatching = [
@@ -49,9 +49,9 @@ describe('Contact matching', function () {
 
   before(function (done) {
     agent = request.agent(app);
-    // sequelize.options.logging = null;
+    // db.options.logging = null;
 
-    sequelize.sync({ force: true}).then(function () {
+    db.sync({ force: true}).then(function () {
       User.bulkCreate(users).then(function () {
         done();
       });

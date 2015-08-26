@@ -6,7 +6,7 @@ var sinon = require('sinon'),
   request = require('supertest-as-promised'),
   Promise = require('bluebird'),
   app = require('../src/apps/main'),
-  sequelize = require('../src/lib/sequelize'),
+  db = require('../src/lib/db'),
   ConfirmationCode = require('../src/models/ConfirmationCode'),
   User = require('../src/models/User'),
   twilio = require('../src/lib/twilio'),
@@ -21,9 +21,9 @@ describe('auth', function () {
 
   before(function (done) {
     agent = request.agent(app);
-    sequelize.options.logging = null;
+    db.options.logging = null;
 
-    sequelize.sync({ force: true}).then(function () {
+    db.sync({ force: true}).then(function () {
       done();
     });
   });
@@ -99,7 +99,7 @@ describe('auth', function () {
 
   describe('/auth/confirm', function () {
     beforeEach(function (done) {
-      sequelize.sync({ force: true}).then(function () {
+      db.sync({ force: true}).then(function () {
         ConfirmationCode.bulkCreate([{
           phoneNumber: '+14013911814',
           code: '555555'
