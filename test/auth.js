@@ -7,7 +7,7 @@ var sinon = require('sinon'),
   Promise = require('bluebird'),
   app = require('../src/apps/main'),
   sequelize = require('../src/lib/sequelize'),
-  NumberConfirmation = require('../src/models/NumberConfirmation'),
+  ConfirmationCode = require('../src/models/ConfirmationCode'),
   User = require('../src/models/User'),
   twilio = require('../src/lib/twilio'),
   mapTimes = require('../src/lib/Util').mapTimes;
@@ -42,14 +42,14 @@ describe('auth', function () {
         .end(done);
     });
 
-    it('Creates a NumberConfirmation if a message is sent successfully', function (done) {
+    it('Creates a ConfirmationCode if a message is sent successfully', function (done) {
       agent.post('/auth')
         .send(defaultNumberData)
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
 
-          return NumberConfirmation.findAll().then(function (confirmations) {
+          return ConfirmationCode.findAll().then(function (confirmations) {
             expect(confirmations.length).to.equal(1);
             done();
           });
@@ -57,13 +57,13 @@ describe('auth', function () {
     });
 
     it('Updates confirmation code when additional requests are sent', function (done) {
-      NumberConfirmation.find(defaultNumberData).then(function (confirmation) {
+      ConfirmationCode.find(defaultNumberData).then(function (confirmation) {
         var startCode = confirmation.code;
 
         agent.post('/auth')
           .send(defaultNumberData)
           .end(function () {
-            NumberConfirmation.findAll({ where: defaultNumberData }).then(function (res) {
+            ConfirmationCode.findAll({ where: defaultNumberData }).then(function (res) {
               expect(res.length).to.equal(1);
               expect(res[0].code).to.not.equal(startCode);
               done();
@@ -89,7 +89,7 @@ describe('auth', function () {
         return agent.post('/auth')
           .send(defaultNumberData)
       })).catch(function () {
-        NumberConfirmation.find({where: defaultNumberData}).then(function (res) {
+        ConfirmationCode.find({where: defaultNumberData}).then(function (res) {
           expect(res.phoneNumberLocked).to.be.ok
           done();
         });
@@ -100,7 +100,7 @@ describe('auth', function () {
   describe('/auth/confirm', function () {
     beforeEach(function (done) {
       sequelize.sync({ force: true}).then(function () {
-        NumberConfirmation.bulkCreate([{
+        ConfirmationCode.bulkCreate([{
           phoneNumber: '+14013911814',
           code: '555555'
         }, {
@@ -166,7 +166,7 @@ describe('auth', function () {
             code: '555555'
           });
       })).catch(function () {
-        return NumberConfirmation.find({
+        return ConfirmationCode.find({
           where: {
             phoneNumber: '+15555555'
           }

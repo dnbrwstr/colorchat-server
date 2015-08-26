@@ -1,7 +1,7 @@
 let express = require('express'),
   twilio = require('../lib/twilio'),
   wrapAsyncRoute = require('../lib/wrapAsyncRoute'),
-  NumberConfirmation = require('../models/NumberConfirmation'),
+  ConfirmationCode = require('../models/ConfirmationCode'),
   User = require('../models/User');
 
 import { RequestError } from '../lib/errors';
@@ -15,7 +15,7 @@ app.post('/', wrapAsyncRoute(async function (req, res, next) {
     throw new RequestError('Missing phone number');
   }
 
-  let confirmation = await NumberConfirmation.createOrUpdateFromNumber(number);
+  let confirmation = await ConfirmationCode.createOrUpdateFromNumber(number);
 
   await twilio.sendConfirmationCode({
     code: confirmation.code,
@@ -32,7 +32,7 @@ app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
     throw new RequestError('Missing required input');
   }
 
-  let confirmation = await NumberConfirmation.attemptValidationWhere({
+  let confirmation = await ConfirmationCode.attemptValidationWhere({
     phoneNumber: phoneNumber,
     code: code.toString()
   });

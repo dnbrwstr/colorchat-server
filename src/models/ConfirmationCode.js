@@ -6,7 +6,7 @@ import { PermissionsError } from '../lib/errors';
 let maxCodesCreated = 20;
 let maxConfirmationAttempts = 6;
 
-let NumberConfirmation = sequelize.define('NumberConfirmation', {
+let ConfirmationCode = sequelize.define('ConfirmationCode', {
   phoneNumber: {
     type: Sequelize.STRING,
     required: true
@@ -38,7 +38,7 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
 }, {
   classMethods: {
     createOrUpdateFromNumber: async function (phoneNumber) {
-      let confirmation = await NumberConfirmation.findWithNumber(phoneNumber);
+      let confirmation = await ConfirmationCode.findWithNumber(phoneNumber);
       let code = Math.floor(Math.random() * 999999).toString();
 
       if (confirmation) {
@@ -65,7 +65,7 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
           return confirmation;
         }
       } else {
-        return NumberConfirmation.create({
+        return ConfirmationCode.create({
           code: code,
           phoneNumber: phoneNumber
         });
@@ -73,7 +73,7 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
     },
 
     attemptValidationWhere: async function (data) {
-      let confirmation = await NumberConfirmation.findWithNumber(data.phoneNumber);
+      let confirmation = await ConfirmationCode.findWithNumber(data.phoneNumber);
 
       if (!confirmation) {
         throw new PermissionsError('No matching confirmation found');
@@ -98,9 +98,9 @@ let NumberConfirmation = sequelize.define('NumberConfirmation', {
       }
     },
 
-    findWithNumber: (phoneNumber) => NumberConfirmation.find({ where: { phoneNumber } })
+    findWithNumber: (phoneNumber) => ConfirmationCode.find({ where: { phoneNumber } })
   }
 
 });
 
-module.exports = NumberConfirmation;
+module.exports = ConfirmationCode;
