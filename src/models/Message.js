@@ -2,6 +2,10 @@ import Sequelize from 'sequelize';
 import db from '../lib/db';
 
 let Message = db.define('Message', {
+  id: {
+    type: Sequelize.UUID,
+    primaryKey: true
+  },
   senderId: {
     type: Sequelize.INTEGER,
     required: true
