@@ -5,7 +5,8 @@ import sequelize from '../lib/sequelize';
 var User = sequelize.define('User', {
   number: {
     type: Sequelize.STRING,
-    required: true
+    required: true,
+    unique: true
   },
   tokens: {
     type: Sequelize.ARRAY(Sequelize.STRING),
@@ -16,10 +17,19 @@ var User = sequelize.define('User', {
     createFromConfirmation: async confirmation => {
       let tokenBuffer = await crypto.randomBytesAsync(64)
       let token = tokenBuffer.toString('hex');
-      let user = await User.create({
-        number: confirmation.number,
-        tokens: [token]
-      });
+
+      let user = await User.find({ where: { number: confirmation.number } });
+
+      if (user) {
+        user = await user.update({
+          tokens: user.tokens.concat([token])
+        });
+      } else {
+        user = await User.create({
+          number: confirmation.number,
+          tokens: [token]
+        });
+      }
 
       return user;
     },

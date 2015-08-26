@@ -8,6 +8,7 @@ var sinon = require('sinon'),
   app = require('../src/apps/main'),
   sequelize = require('../src/lib/sequelize'),
   NumberConfirmation = require('../src/models/NumberConfirmation'),
+  User = require('../src/models/User'),
   twilio = require('../src/lib/twilio'),
   mapTimes = require('../src/lib/Util').mapTimes;
 
@@ -97,7 +98,7 @@ describe('auth', function () {
   });
 
   describe('/auth/confirm', function () {
-    before(function (done) {
+    beforeEach(function (done) {
       sequelize.sync({ force: true}).then(function () {
         NumberConfirmation.bulkCreate([{
           number: '+14013911814',
@@ -121,7 +122,7 @@ describe('auth', function () {
         .end(done);
     });
 
-    it('Returns an auth token if valid credentials are submitted', function (done) {
+    it('Creates a new user if valid credentials are submitted', function (done) {
       agent.post('/auth/confirm')
         .send({
           number: '+14013911814',
@@ -135,6 +136,26 @@ describe('auth', function () {
           expect(res.body.user).to.have.all.keys(['token', 'number', 'id']);
           done();
         });
+    });
+
+    it('Adds token to existing user if possible', function (done) {
+      User.create({
+        number: '+14013911814',
+        tokens: ['aaa']
+      }).then(function () {
+        agent.post('/auth/confirm')
+          .send({
+            number: '+14013911814',
+            code: '555555'
+          })
+          .end(function () {
+            User.findAll().then(function (users) {
+              expect(users.length).to.equal(1);
+              expect(users[0].tokens.length).to.equal(2);
+              done();
+            })
+          });
+      });
     });
 
     it('Locks code after 6 failed attempts to confirm', function (done) {
@@ -155,6 +176,5 @@ describe('auth', function () {
         });
       });
     });
-
   });
 });
