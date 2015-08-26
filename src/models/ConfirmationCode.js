@@ -1,6 +1,5 @@
-let Sequelize = require('sequelize'),
-  db = require('../lib/db');
-
+import Sequelize from 'sequelize';
+import db from '../lib/db';
 import { PermissionsError } from '../lib/errors';
 
 let maxCodesCreated = 20;
@@ -103,4 +102,4 @@ let ConfirmationCode = db.define('ConfirmationCode', {
 
 });
 
-module.exports = ConfirmationCode;
+export default ConfirmationCode;

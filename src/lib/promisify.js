@@ -1,3 +1,4 @@
-var Promise = require('bluebird');
+import Promise from 'bluebird';
+import crypto from 'crypto';
 
-Promise.promisifyAll(require('crypto'));
+Promise.promisifyAll(crypto);

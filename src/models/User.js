@@ -2,7 +2,7 @@ import Sequelize from 'sequelize';
 import crypto from 'crypto';
 import db from '../lib/db';
 
-var User = db.define('User', {
+let User = db.define('User', {
   phoneNumber: {
     type: Sequelize.STRING,
     required: true,
@@ -54,4 +54,4 @@ var User = db.define('User', {
   }
 });
 
-module.exports = User;
+export default User;

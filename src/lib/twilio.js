@@ -1,9 +1,9 @@
-var twilio = require('twilio'),
-  Promise = require('bluebird');
+import twilio from 'twilio';
+import Promise from 'bluebird';
 
-var client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
+let client = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN);
 
-module.exports = {
+export default {
   sendConfirmationCode: function (options) {
     return client.sms.messages.post({
       to: options.phoneNumber,
@@ -11,4 +11,4 @@ module.exports = {
       body: 'Your ColorChat confirmation code is ' + options.code
     });
   }
-}
+};

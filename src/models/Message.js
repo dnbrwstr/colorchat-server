@@ -1,5 +1,5 @@
-let Sequelize = require('sequelize'),
-  db = require('../lib/db');
+import Sequelize from 'sequelize';
+import db from '../lib/db';
 
 let Message = db.define('Message', {
   senderId: {

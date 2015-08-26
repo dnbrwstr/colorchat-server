@@ -1,11 +1,11 @@
-let express = require('express'),
-  bodyParser = require('body-parser'),
-  cors = require('cors'),
-  morgan = require('morgan'),
-  authApp = require('./auth'),
-  matchApp = require('./match'),
-  logError = require('../lib/logError'),
-  RequestError = require('../lib/errors').Request;
+import express from 'express';
+import bodyParser from 'body-parser';
+import cors from 'cors';
+import morgan from 'morgan';
+import authApp from './auth';
+import matchApp from './match';
+import logError from '../lib/logError';
+import { RequestError } from '../lib/errors';
 
 let app = express();
 
@@ -25,4 +25,4 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500).send('Something bad happened');
 });
 
-module.exports = app;
+export default app;

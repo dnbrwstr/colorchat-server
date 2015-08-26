@@ -6,4 +6,4 @@ let wrapAsyncRoute = (fn) => {
   }
 };
 
-module.exports = wrapAsyncRoute;
+export default wrapAsyncRoute;

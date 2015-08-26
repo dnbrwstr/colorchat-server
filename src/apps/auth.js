@@ -1,9 +1,8 @@
-let express = require('express'),
-  twilio = require('../lib/twilio'),
-  wrapAsyncRoute = require('../lib/wrapAsyncRoute'),
-  ConfirmationCode = require('../models/ConfirmationCode'),
-  User = require('../models/User');
-
+import express from 'express';
+import twilio from '../lib/twilio';
+import wrapAsyncRoute from '../lib/wrapAsyncRoute';
+import ConfirmationCode from '../models/ConfirmationCode';
+import User from '../models/User';
 import { RequestError } from '../lib/errors';
 
 let app = express();
@@ -48,4 +47,4 @@ app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
   });
 }));
 
-module.exports = app;
+export default app;

@@ -1,8 +1,7 @@
-var http = require('http'),
-  app = require('../apps/main'),
-  socketApp = require('../apps/message');
-
 import chalk from 'chalk';
+import http from 'http';
+import app from '../apps/main';
+import socketApp from '../apps/message';
 
 let createServer = () => {
   var port = process.env.PORT || 3000;
