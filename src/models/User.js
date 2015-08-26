@@ -1,6 +1,6 @@
 import Sequelize from 'sequelize';
 import crypto from 'crypto';
-import sequelize from '../lib/sequelize';
+import sequelize from '../lib/Sequelize';
 
 var User = sequelize.define('User', {
   phoneNumber: {

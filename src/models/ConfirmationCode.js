@@ -1,5 +1,5 @@
 let Sequelize = require('sequelize'),
-  sequelize = require('../lib/sequelize');
+  sequelize = require('../lib/Sequelize');
 
 import { PermissionsError } from '../lib/errors';
 

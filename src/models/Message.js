@@ -1,5 +1,5 @@
 let Sequelize = require('sequelize'),
-  sequelize = require('../lib/sequelize');
+  sequelize = require('../lib/Sequelize');
 
 let Message = sequelize.define('Message', {
   senderId: {
