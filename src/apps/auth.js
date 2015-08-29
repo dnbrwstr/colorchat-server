@@ -1,6 +1,7 @@
 import express from 'express';
 import twilio from '../lib/twilio';
 import wrapAsyncRoute from '../lib/wrapAsyncRoute';
+import { validate } from '../lib/PhoneNumberUtils';
 import ConfirmationCode from '../models/ConfirmationCode';
 import User from '../models/User';
 import { RequestError } from '../lib/errors';
@@ -8,13 +9,23 @@ import { RequestError } from '../lib/errors';
 let app = express();
 
 app.post('/', wrapAsyncRoute(async function (req, res, next) {
-  let number = req.body.phoneNumber;
+  let { baseNumber, countryCode } = req.body;
 
-  if (!number) {
+  if (!baseNumber) {
     throw new RequestError('Missing phone number');
   }
 
-  let confirmation = await ConfirmationCode.createOrUpdateFromNumber(number);
+  if (!countryCode) {
+    throw new RequestError('Missing country code');
+  }
+
+  let isValidNumber = validate(baseNumber, countryCode);
+  if (!isValidNumber) {
+    throw new RequestError('Not a valid phone number');
+  }
+
+  let phoneNumber = `+${countryCode}${baseNumber}`;
+  let confirmation = await ConfirmationCode.createOrUpdateFromNumber(phoneNumber);
 
   await twilio.sendConfirmationCode({
     code: confirmation.code,

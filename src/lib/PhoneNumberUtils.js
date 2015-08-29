@@ -4,6 +4,19 @@ import { getFirstResult } from './Util';
 let defaultRegion = process.env.DEFAULT_REGION;
 let numberUtil = PhoneNumberUtil.getInstance();
 
+export let validate = (number, countryCode) => {
+  let region = numberUtil.getRegionCodeForCountryCode(countryCode);
+
+  try {
+    let parsedNumber = numberUtil.parse(number, region);
+    if (parsedNumber && numberUtil.isValidNumber(parsedNumber)) {
+      return true;
+    }
+  } catch (e) {}
+
+  return false;
+};
+
 export let normalize = (numberOrArray, userNumber) => {
   return numberOrArray instanceof Array ?
     numberOrArray.map(n => normalize(n, userNumber)) :

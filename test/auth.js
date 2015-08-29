@@ -13,7 +13,14 @@ var sinon = require('sinon'),
   mapTimes = require('../src/lib/Util').mapTimes;
 
 var defaultNumberData = {
-  phoneNumber: '+14013911814'
+  baseNumber: '4013911814',
+  countryCode: '1'
+};
+
+var defaultPhoneNumber = '+14013911814';
+
+var defaultNumberQuery = {
+  phoneNumber: defaultPhoneNumber
 };
 
 describe('auth', function () {
@@ -37,7 +44,7 @@ describe('auth', function () {
 
     it('Throws an error if no phone number is passed', function (done) {
       agent.post('/auth')
-        .send({phoneNumber: ''})
+        .send({number: '', countryCode: '1'})
         .expect(400)
         .end(done);
     });
@@ -57,13 +64,13 @@ describe('auth', function () {
     });
 
     it('Updates confirmation code when additional requests are sent', function (done) {
-      ConfirmationCode.find(defaultNumberData).then(function (confirmation) {
+      ConfirmationCode.find(defaultNumberQuery).then(function (confirmation) {
         var startCode = confirmation.code;
 
         agent.post('/auth')
           .send(defaultNumberData)
           .end(function () {
-            ConfirmationCode.findAll({ where: defaultNumberData }).then(function (res) {
+            ConfirmationCode.findAll({ where: defaultNumberQuery }).then(function (res) {
               expect(res.length).to.equal(1);
               expect(res[0].code).to.not.equal(startCode);
               done();
@@ -88,8 +95,10 @@ describe('auth', function () {
       Promise.all(mapTimes(21, function () {
         return agent.post('/auth')
           .send(defaultNumberData)
-      })).catch(function () {
-        ConfirmationCode.find({where: defaultNumberData}).then(function (res) {
+      })).then(function () {
+        done('Should have thrown an error')
+      }).catch(function () {
+        ConfirmationCode.find({where: defaultNumberQuery}).then(function (res) {
           expect(res.phoneNumberLocked).to.be.ok
           done();
         });
