@@ -22,7 +22,7 @@ app.use('/match', matchApp)
 
 app.use(function (err, req, res, next) {
   logError(err);
-  res.status(err.status || 500).send('Something bad happened');
+  res.status(err.status || 500).send(err.message || 'Something bad happened');
 });
 
 export default app;
