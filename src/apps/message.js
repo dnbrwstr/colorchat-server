@@ -26,12 +26,14 @@ let processMessageData = messageData => {
   });
 };
 
-app.use(function (socket, next) {
+// Middleware
+
+let handleError = function (socket, next) {
   socket.on('error', logError);
   next();
-});
+};
 
-app.use(wrap(async function (socket, next) {
+let authenticateUser = async function (socket, next) {
   let token = socket.handshake.query.token;
 
   if (!token) {
@@ -46,9 +48,9 @@ app.use(wrap(async function (socket, next) {
     socket.user = user;
     return next();
   }
-}));
+};
 
-app.on('connection', wrap(async function (socket) {
+let handleConnection = async function (socket, next) {
   userSockets[socket.user.id] = socket;
 
   let messages = await Message.findAllByRecipientId(socket.user.id);
@@ -75,9 +77,13 @@ app.on('connection', wrap(async function (socket) {
     if (cb) cb(message);
   }));
 
-  socket.on('disconnect', function () {
+  socket.on('disconnect', () => {
     delete userSockets[socket.user.id];
   });
-}));
+};
+
+app.use(handleError);
+app.use(wrap(authenticateUser));
+app.on('connection', wrap(handleConnection));
 
 export default app;
