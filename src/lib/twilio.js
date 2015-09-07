@@ -10,5 +10,13 @@ export default {
       from: process.env.TWILIO_NUMBER,
       body: 'Your ColorChat confirmation code is ' + options.code
     });
+  },
+
+  callWithConfirmationCode: function (options) {
+    return client.makeCall({
+      to: options.phoneNumber,
+      from: process.env.TWILIO_NUMBER,
+      url: process.env.BASE_URL + '/auth/twiml?code=' + options.code
+    });
   }
 };

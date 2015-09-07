@@ -3,9 +3,8 @@ import http from 'http';
 import app from '../apps/main';
 import socketApp from '../apps/message';
 
-let createServer = () => {
-  var port = process.env.PORT || 3000;
-  var server = http.createServer(app);
+let createServer = (port=3000) => {
+  let server = http.createServer(app);
   socketApp.attach(server);
   server.listen(port);
   console.log(chalk.green('Now listening on port ' + port));

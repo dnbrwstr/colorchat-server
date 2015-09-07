@@ -58,4 +58,15 @@ app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
   });
 }));
 
+app.post('/call', function () {
+  let { phoneNumber } = req.body;
+
+  twilio.callWithConfirmationCode({
+    code: confirmation.code,
+    phoneNumber: confirmation.phoneNumber
+  });
+});
+
+
+
 export default app;

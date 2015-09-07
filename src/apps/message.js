@@ -1,3 +1,4 @@
+import redis from 'redis';
 import uuid from 'uuid';
 import io from 'socket.io';
 import { merge } from 'ramda';
@@ -5,8 +6,20 @@ import { PermissionsError, RequestError } from '../lib/errors';
 import User from '../models/User';
 import Message from '../models/Message';
 import logError from '../lib/logError';
+import createRedisClient from '../lib/createRedisClient';
 
 let userSockets = {};
+let redisClient = createRedisClient();
+
+redisClient.setDeliveryHandler(function (userId, messages, onDeliverySuccess) {
+  let socket = userSockets[userId];
+
+  if (!socket) {
+    throw new Error('Trying to deliver message on a nonexistent socket for user ' + userId);
+  }
+
+  socket.emit('messagedata', messages, onDeliverySuccess);
+});
 
 let app = io();
 
@@ -51,34 +64,33 @@ let authenticateUser = async function (socket, next) {
 };
 
 let handleConnection = async function (socket, next) {
-  userSockets[socket.user.id] = socket;
+  let userId = socket.user.id;
 
-  let messages = await Message.findAllByRecipientId(socket.user.id);
+  userSockets[userId] = socket;
+  redisClient.onUserConnect(userId);
 
-  if (messages.length) {
-    socket.emit('pending', messages, function () {
-      Message.destroy({ where: {
-        id: messages.map(m => m.id)
-      } });
-    });
-  }
-
-  socket.on('message', wrap(async function (messageData, cb) {
-    messageData.senderId = socket.user.id;
-
-    let message = processMessageData(messageData);
-
-    if (userSockets[message.recipientId]) {
-      userSockets[message.recipientId].emit('message', message);
-    } else {
-      await Message.create(message);
+  socket.on('messagedata', wrap(async function (messageData, cb) {
+    if (!(messageData instanceof Array)) {
+      messageData = [messageData];
     }
 
-    if (cb) cb(message);
+    let processedMessages = messageData.map(m => {
+      m.senderId = userId;
+      return processMessageData(m);
+    });
+
+    redisClient.sendMessages(processedMessages)
+      .then(function () {
+        if (cb) cb(processedMessages);
+      }).
+      catch(function (e) {
+        console.log(e);
+      })
   }));
 
   socket.on('disconnect', () => {
-    delete userSockets[socket.user.id];
+    redisClient.onUserDisconnect(userId);
+    delete userSockets[userId];
   });
 };
 

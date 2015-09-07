@@ -1,9 +1,8 @@
 require('./helpers/configure');
 
-require('../src/init');
-
 var sinon = require('sinon'),
   R = require('ramda'),
+  redis = require('redis'),
   io = require('socket.io-client'),
   sinonAsPromised = require('sinon-as-promised'),
   expect = require('chai').expect,
@@ -11,7 +10,12 @@ var sinon = require('sinon'),
   Promise = require('bluebird'),
   db = require('../src/lib/db'),
   User = require('../src/models/User'),
-  Message = require('../src/models/Message');
+  Message = require('../src/models/Message'),
+  createServer = require('../src/lib/createServer'),
+  createRedisClient = require('../src/lib/createRedisClient');
+
+var redisClient = redis.createClient(process.env.REDIS_URL);
+var appRedisClient = createRedisClient();
 
 var testUserData = [{
   number: '+14013911814',
@@ -44,9 +48,15 @@ var runOnAttempt = function (number, cb) {
 describe('messaging', function () {
   var users;
   var clients = [];
+  var portA = parseInt(process.env.PORT) || 3000;
+  var portB = portA + 1;
+  var serverA = createServer(portA);
+  var serverB = createServer(portB);
 
   var connectWithOptions = function (options) {
-    var url = 'http://localhost:' + (process.env.PORT || 3000);
+    // Distribute clients between servers
+    var port = clients.length % 2 === 1 ? portA : portB;
+    var url = 'http://localhost:' + port;
     var client = io(url, options);
     clients.push(client);
     return client;
@@ -70,16 +80,22 @@ describe('messaging', function () {
   beforeEach(function (done) {
     db.options.logging = null;
 
-    db.sync({ force: true}).then(function () {
-      User.bulkCreate(testUserData).then(function () {
+    redisClient.flushdbAsync()
+      .then(function () {
+        return db.sync({ force: true});
+      })
+      .then(function () {
+        return User.bulkCreate(testUserData);
+      })
+      .then(function () {
         // db doesn't return autoincremented
         // ids after bulk create
-        User.findAll().then(function (_users) {
-          users = _users;
-          done();
-        })
+        return User.findAll()
+      })
+      .then(function (_users) {
+        users = _users;
+        done();
       });
-    });
   });
 
   it('Requires token in query string', function (done) {
@@ -116,19 +132,19 @@ describe('messaging', function () {
 
   it('Sends a message', function (done) {
     var cb = runOnAttempt(2, function () {
-      secondClient.emit('message', createMessage(1, 0));
+      secondClient.emit('messagedata', createMessage(1, 0));
 
-      secondClient.on('message', function (message) {
+      secondClient.on('messagedata', function (message) {
         done(new Error('Second client should not receive own message'))
       });
 
-      firstClient.on('message', function (message) {
+      firstClient.on('messagedata', function (message) {
         done();
       });
     });
 
-    var firstClient = clientForUser(0).on('connect', cb);
-    var secondClient = clientForUser(1).on('connect', cb);
+    var firstClient = clientForUser(0).on('messagedata', cb);
+    var secondClient = clientForUser(1).on('messagedata', cb);
   });
 
   it('Stores message if recipient isnt available', function (done) {
@@ -137,8 +153,8 @@ describe('messaging', function () {
     var messageData = createMessage(0, 1);
 
     client.on('connect', function () {
-      client.emit('message', messageData, function (m) {
-        Message.findAll().then(function (messages) {
+      client.emit('messagedata', messageData, function (m) {
+        appRedisClient.getPendingMessages(users[1].id).then(function (messages) {
           expect(messages.length).to.equal(1);
           done();
         });
@@ -148,16 +164,16 @@ describe('messaging', function () {
 
   it('Passes pending messages when client connects', function (done) {
     var firstClient = clientForUser(0).on('connect', function () {
-      var cb = runOnAttempt(3, function () {
-        clientForUser(1).on('pending', function (messages, cb) {
-          expect(messages.length).to.equal(3);
-          done();
-        });
-      });
+      firstClient.emit('messagedata', createMessage(0, 1), cb);
+      firstClient.emit('messagedata', createMessage(0, 1), cb);
+      firstClient.emit('messagedata', createMessage(0, 1), cb);
+    });
 
-      firstClient.emit('message', createMessage(0, 1), cb);
-      firstClient.emit('message', createMessage(0, 1), cb);
-      firstClient.emit('message', createMessage(0, 1), cb);
+    var cb = runOnAttempt(3, function () {
+      clientForUser(1).on('messagedata', function (messages, cb) {
+        expect(messages.length).to.equal(3);
+        done();
+      });
     });
   });
 
