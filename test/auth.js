@@ -96,8 +96,6 @@ describe('auth', function () {
         return agent.post('/auth')
           .send(defaultNumberData)
       })).then(function () {
-        done('Should have thrown an error')
-      }).catch(function () {
         ConfirmationCode.find({where: defaultNumberQuery}).then(function (res) {
           expect(res.phoneNumberLocked).to.be.ok
           done();
@@ -174,7 +172,7 @@ describe('auth', function () {
             phoneNumber: '+15555555',
             code: '555555'
           });
-      })).catch(function () {
+      })).then(function () {
         return ConfirmationCode.find({
           where: {
             phoneNumber: '+15555555'
