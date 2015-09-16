@@ -12,7 +12,7 @@ machine:
 
 deployment:
   hub:
-    branch: master
+    branch: circle
     commands:
       - docker build -t dnbrwstr/colorchat-server
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
