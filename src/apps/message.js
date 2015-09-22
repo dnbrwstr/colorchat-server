@@ -82,10 +82,8 @@ let handleConnection = async function (socket, next) {
     redisClient.sendMessages(processedMessages)
       .then(function () {
         if (cb) cb(processedMessages);
-      }).
-      catch(function (e) {
-        console.log(e);
       })
+      .catch(console.log);
   }));
 
   socket.on('disconnect', () => {

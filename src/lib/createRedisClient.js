@@ -38,8 +38,12 @@ let createRedisClient = function () {
 
       let onDeliverySuccess = function () {
         let multi = client.multi();
-        messages.forEach(m => multi.lrem(m));
-        multi.exec();
+
+        messages.forEach(m => {
+          multi.lrem(getQueueKey(userId), 0, JSON.stringify(m));
+        });
+
+        multi.execAsync().catch(console.log);
       };
 
       deliveryHandler(userId, messages, onDeliverySuccess);
