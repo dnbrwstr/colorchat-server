@@ -8,5 +8,5 @@ var db = require('./lib/db'),
   createServer = require('./lib/createServer');
 
 db.sync().then(function () {
-  createServer(process.env.port);
+  createServer(process.env.PORT);
 });
