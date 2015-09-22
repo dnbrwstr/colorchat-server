@@ -17,5 +17,5 @@ deployment:
       - docker push dnbrwstr/colorchat-server
       - |
         ssh core@54.152.52.28 <<ENDSSH
-        kubectl replace colorchat-server --image=dnbrwstr/colorchat-server:latest
+        kubectl rolling-update colorchat-server --image=dnbrwstr/colorchat-server:latest
         ENDSSH
