@@ -1,7 +1,6 @@
 machine:
   services:
     - docker
-
   node:
     version: 2.5.0
   environment:
@@ -9,7 +8,6 @@ machine:
     DATABASE_URL: postgres://ubuntu@127.0.0.1:5432/circle_test
     PORT: 3001
     REDIS_URL: redis://127.0.0.1:6379/2
-
 deployment:
   hub:
     branch: circle
@@ -17,3 +15,7 @@ deployment:
       - docker build -t dnbrwstr/colorchat-server .
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push dnbrwstr/colorchat-server
+      - |
+        ssh core@54.152.52.28 <<ENDSSH
+        kubectl replace colorchat-server --image=dnbrwstr/colorchat-server:latest
+        ENDSSH
