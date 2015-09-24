@@ -1,7 +1,8 @@
 import redis from 'redis';
 import uuid from 'uuid';
+import chalk from 'chalk';
 import io from 'socket.io';
-import { merge } from 'ramda';
+import { merge, pick } from 'ramda';
 import { PermissionsError, RequestError } from '../lib/errors';
 import User from '../models/User';
 import Message from '../models/Message';
@@ -78,6 +79,9 @@ let handleConnection = async function (socket, next) {
       m.senderId = userId;
       return processMessageData(m);
     });
+
+    let { senderId, recipientId } = processedMessages[0];
+    console.log(chalk.blue('Message:', senderId, '=>', recipientId));
 
     redisClient.sendMessages(processedMessages)
       .then(function () {
