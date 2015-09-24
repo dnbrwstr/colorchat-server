@@ -1,7 +1,7 @@
 import express from 'express';
 import twilio from '../lib/twilio';
 import wrapAsyncRoute from '../lib/wrapAsyncRoute';
-import { validate } from '../lib/PhoneNumberUtils';
+import { validate, normalize } from '../lib/PhoneNumberUtils';
 import ConfirmationCode from '../models/ConfirmationCode';
 import User from '../models/User';
 import { RequestError } from '../lib/errors';
@@ -24,7 +24,7 @@ app.post('/', wrapAsyncRoute(async function (req, res, next) {
     throw new RequestError('Not a valid phone number');
   }
 
-  let phoneNumber = `+${countryCode}${baseNumber}`;
+  let phoneNumber = normalize(`+${countryCode}${baseNumber}`);
   let confirmation = await ConfirmationCode.createOrUpdateFromNumber(phoneNumber);
 
   await twilio.sendConfirmationCode({
@@ -32,7 +32,9 @@ app.post('/', wrapAsyncRoute(async function (req, res, next) {
     phoneNumber: confirmation.phoneNumber
   });
 
-  res.status(200).send();
+  res.json({
+    phoneNumber: confirmation.phoneNumber
+  });
 }));
 
 app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
