@@ -32,12 +32,19 @@ let wrap = fn => (socket, next) => {
 };
 
 let processMessageData = messageData => {
+  let allowedKeys = [
+    'id',
+    'senderId',
+    'recipientId',
+    'color',
+    'createdAt'
+  ];
   let id = uuid.v4();
 
-  return merge(messageData, {
+  return pick(allowedKeys, merge(messageData, {
     id,
     createdAt: new Date()
-  });
+  }));
 };
 
 // Middleware
