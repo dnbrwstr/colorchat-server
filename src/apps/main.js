@@ -5,6 +5,7 @@ import cors from 'cors';
 import morgan from 'morgan';
 import authApp from './auth';
 import matchApp from './match';
+import accountApp from './account';
 import logError from '../lib/logError';
 import { RequestError } from '../lib/errors';
 
@@ -15,11 +16,11 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 app.use(morgan('dev'));
-
 app.use(bodyParser.json());
 
 app.use('/auth', authApp);
 app.use('/match', matchApp);
+app.use('/account', accountApp);
 
 app.use(function (err, req, res, next) {
   if (err instanceof ev.ValidationError) {

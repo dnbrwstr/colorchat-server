@@ -11,6 +11,10 @@ let User = db.define('User', {
   tokens: {
     type: Sequelize.ARRAY(Sequelize.STRING),
     required: true
+  },
+  deviceTokens: {
+    type: Sequelize.ARRAY(Sequelize.STRING),
+    defaultValue: []
   }
 }, {
   classMethods: {
