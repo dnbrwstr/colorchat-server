@@ -1,6 +1,7 @@
 import Sequelize from 'sequelize';
 import db from '../lib/db';
 import { PermissionsError } from '../lib/errors';
+import { normalize } from '../lib/PhoneNumberUtils';
 
 let maxCodesCreated = 20;
 let maxConfirmationAttempts = 6;

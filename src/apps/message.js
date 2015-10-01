@@ -37,7 +37,9 @@ let processMessageData = messageData => {
     'senderId',
     'recipientId',
     'color',
-    'createdAt'
+    'createdAt',
+    'width',
+    'height'
   ];
   let id = uuid.v4();
 
