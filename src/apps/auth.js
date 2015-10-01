@@ -1,25 +1,26 @@
 import express from 'express';
+import validate from 'express-validation';
+import Joi from 'joi';
 import twilio from '../lib/twilio';
 import wrapAsyncRoute from '../lib/wrapAsyncRoute';
-import { validate, normalize } from '../lib/PhoneNumberUtils';
+import { validate as validateNumber, normalize } from '../lib/PhoneNumberUtils';
 import ConfirmationCode from '../models/ConfirmationCode';
 import User from '../models/User';
 import { RequestError } from '../lib/errors';
 
 let app = express();
 
-app.post('/', wrapAsyncRoute(async function (req, res, next) {
+let registerValidator = {
+  body: {
+    baseNumber: Joi.string().required().min(7).max(22),
+    countryCode: Joi.string().required().min(1).max(4)
+  }
+};
+
+app.post('/', validate(registerValidator), wrapAsyncRoute(async function (req, res, next) {
   let { baseNumber, countryCode } = req.body;
 
-  if (!baseNumber) {
-    throw new RequestError('Missing phone number');
-  }
-
-  if (!countryCode) {
-    throw new RequestError('Missing country code');
-  }
-
-  let isValidNumber = validate(baseNumber, countryCode);
+  let isValidNumber = validateNumber(baseNumber, countryCode);
   if (!isValidNumber) {
     throw new RequestError('Not a valid phone number');
   }
@@ -37,12 +38,15 @@ app.post('/', wrapAsyncRoute(async function (req, res, next) {
   });
 }));
 
+let confirmValidator = {
+  body: {
+    phoneNumber: Joi.string().min(7).max(22),
+    code: Joi.string().min(1).max(50)
+  }
+};
+
 app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
   let { phoneNumber, code } = req.body;
-
-  if (!phoneNumber || !code) {
-    throw new RequestError('Missing required input');
-  }
 
   let confirmation = await ConfirmationCode.attemptValidationWhere({
     phoneNumber: phoneNumber,
@@ -68,7 +72,5 @@ app.post('/call', function () {
     phoneNumber: confirmation.phoneNumber
   });
 });
-
-
 
 export default app;
