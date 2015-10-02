@@ -9,17 +9,23 @@ let app = express();
 
 let rootValidator = {
   body: {
-    deviceToken: Joi.string().required()
+    deviceToken: Joi.string(),
+    name: Joi.string()
   }
 };
 
 app.put('/', authenticate, validate(rootValidator), wrapAsyncRoute(async function (req, res, next) {
- console.log(req);
+  let data = {}
 
- await req.user.update({
-  deviceTokens: uniq(req.user.deviceTokens.concat(req.body.deviceToken))
- });
+  if (req.body.deviceToken) {
+    data.deviceTokens = uniq(req.user.deviceTokens.concat(req.body.deviceToken));
+  }
 
+  if (req.body.name) {
+    data.name = req.body.name;
+  }
+
+ await req.user.update(data);
  res.send(200);
 }));
 

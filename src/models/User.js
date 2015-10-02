@@ -3,6 +3,10 @@ import crypto from 'crypto';
 import db from '../lib/db';
 
 let User = db.define('User', {
+  name: {
+    type: Sequelize.STRING,
+    require: false
+  },
   phoneNumber: {
     type: Sequelize.STRING,
     required: true,
