@@ -40,8 +40,8 @@ app.post('/', validate(registerValidator), wrapAsyncRoute(async function (req, r
 
 let confirmValidator = {
   body: {
-    phoneNumber: Joi.string().min(7).max(22),
-    code: Joi.string().min(1).max(50)
+    phoneNumber: Joi.string().required().min(7).max(22),
+    code: Joi.string().required().min(1).max(50)
   }
 };
 
@@ -63,14 +63,5 @@ app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
     }
   });
 }));
-
-app.post('/call', function () {
-  let { phoneNumber } = req.body;
-
-  twilio.callWithConfirmationCode({
-    code: confirmation.code,
-    phoneNumber: confirmation.phoneNumber
-  });
-});
 
 export default app;

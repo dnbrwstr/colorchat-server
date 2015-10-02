@@ -8,6 +8,7 @@ import User from '../models/User';
 import Message from '../models/Message';
 import logError from '../lib/logError';
 import createRedisClient from '../lib/createRedisClient';
+import { sendMessageNotification } from '../lib/NotificationUtils';
 
 let userSockets = {};
 let redisClient = createRedisClient();
@@ -91,6 +92,8 @@ let handleConnection = async function (socket, next) {
 
     let { senderId, recipientId } = processedMessages[0];
     console.log(chalk.blue('Message:', senderId, '=>', recipientId));
+
+    processedMessages.map(sendMessageNotification);
 
     redisClient.sendMessages(processedMessages)
       .then(function () {
