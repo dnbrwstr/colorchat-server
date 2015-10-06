@@ -5,7 +5,6 @@ import io from 'socket.io';
 import { merge, pick } from 'ramda';
 import { PermissionsError, RequestError } from '../lib/errors';
 import User from '../models/User';
-import Message from '../models/Message';
 import logError from '../lib/logError';
 import createRedisClient from '../lib/createRedisClient';
 import { sendMessageNotification } from '../lib/NotificationUtils';

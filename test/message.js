@@ -10,7 +10,6 @@ var sinon = require('sinon'),
   Promise = require('bluebird'),
   db = require('../src/lib/db'),
   User = require('../src/models/User'),
-  Message = require('../src/models/Message'),
   createServer = require('../src/lib/createServer'),
   createRedisClient = require('../src/lib/createRedisClient');
 
