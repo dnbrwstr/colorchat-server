@@ -13,7 +13,8 @@ let ConfirmationCode = db.define('ConfirmationCode', {
   },
   code: {
     type: Sequelize.STRING,
-    required: true
+    required: true,
+    unique: true
   },
   attempts: {
     type: Sequelize.INTEGER,
