@@ -94,12 +94,10 @@ describe('auth', function () {
     it('Locks code creation after 20 attempts', function (done) {
       Promise.all(mapTimes(21, function () {
         return agent.post('/auth')
-          .send(defaultNumberData)
-      })).then(function () {
-        ConfirmationCode.find({where: defaultNumberQuery}).then(function (res) {
-          expect(res.phoneNumberLocked).to.be.ok
-          done();
-        });
+          .send(defaultNumberData);
+      })).catch(function (data) {
+        expect(data.response.status).to.equal(403);
+        done();
       });
     });
   });
@@ -160,7 +158,7 @@ describe('auth', function () {
               expect(users.length).to.equal(1);
               expect(users[0].tokens.length).to.equal(2);
               done();
-            })
+            });
           });
       });
     });
@@ -172,15 +170,9 @@ describe('auth', function () {
             phoneNumber: '+15555555',
             code: '555555'
           });
-      })).then(function () {
-        return ConfirmationCode.find({
-          where: {
-            phoneNumber: '+15555555'
-          }
-        }).then(function (res) {
-          expect(res.codeLocked).to.be.ok
-          done();
-        });
+      })).catch(function (data) {
+        expect(data.response.status).to.equal(403);
+        done();
       });
     });
   });

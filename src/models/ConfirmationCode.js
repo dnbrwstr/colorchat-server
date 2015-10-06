@@ -3,18 +3,26 @@ import db from '../lib/db';
 import { PermissionsError } from '../lib/errors';
 import { normalize } from '../lib/PhoneNumberUtils';
 
-let maxCodesCreated = 20;
-let maxConfirmationAttempts = 6;
+let MAX_CODES_CREATED = 20;
+let MAX_CONFIRMATION_ATTEMPTS = 6;
+
+let generateCode = () => {
+  let code = Math.floor(Math.random() * 999999).toString();
+  while (code.length < 6) {
+    code = `0${code}`;
+  }
+  return code;
+};
 
 let ConfirmationCode = db.define('ConfirmationCode', {
   phoneNumber: {
     type: Sequelize.STRING,
-    required: true
+    required: true,
+    unique: true
   },
   code: {
     type: Sequelize.STRING,
-    required: true,
-    unique: true
+    required: true
   },
   attempts: {
     type: Sequelize.INTEGER,
@@ -25,51 +33,34 @@ let ConfirmationCode = db.define('ConfirmationCode', {
     type: Sequelize.INTEGER,
     required: true,
     defaultValue: 0
-  },
-  codeLocked: {
-    type: Sequelize.BOOLEAN,
-    required: true,
-    defaultValue: false
-  },
-  phoneNumberLocked: {
-    type: Sequelize.BOOLEAN,
-    require: true,
-    defaultValue: false
   }
 }, {
   classMethods: {
     createOrUpdateFromNumber: async function (phoneNumber) {
       let confirmation = await ConfirmationCode.findWithNumber(phoneNumber);
-      let code = Math.floor(Math.random() * 999999).toString();
+      let code = generateCode();
 
-      if (confirmation) {
-        if (confirmation.phoneNumberLocked) {
-          throw new PermissionsError('You have created the maximum number of confirmation codes');
-        }
-
-        await confirmation.increment('codesCreated');
-        await confirmation.reload();
-
-        if (confirmation.codesCreated >= maxCodesCreated) {
-          await confirmation.update({
-            phoneNumberLocked: true
-          });
-
-          throw new PermissionsError('You have created the maximum number of confirmation codes');
-        } else {
-          await confirmation.update({
-            code: code,
-            codeLocked: false,
-            attempts: 0
-          });
-
-          return confirmation;
-        }
-      } else {
+      if (!confirmation) {
         return ConfirmationCode.create({
           code: code,
           phoneNumber: phoneNumber
         });
+      }
+
+      await confirmation.increment('codesCreated');
+      await confirmation.reload();
+
+      if (confirmation.codesCreated >= MAX_CODES_CREATED) {
+        throw new PermissionsError('You have created the maximum number of confirmation codes');
+      } else {
+        // Assume that this is a new device
+        // or install and reset the code
+        await confirmation.update({
+          code: code,
+          attempts: 0
+        });
+
+        return confirmation;
       }
     },
 
@@ -78,24 +69,17 @@ let ConfirmationCode = db.define('ConfirmationCode', {
 
       if (!confirmation) {
         throw new PermissionsError('No matching confirmation found');
+      }
+
+      await confirmation.increment('attempts');
+      await confirmation.reload();
+
+      if (confirmation.attempts >= MAX_CONFIRMATION_ATTEMPTS) {
+        throw new PermissionsError('Too many confirmation attempts');
+      } else if (confirmation.code !== data.code) {
+        throw new PermissionsError('Invalid code');
       } else {
-        if (confirmation.codeLocked) {
-          throw new PermissionsError('Too many confirmation attempts');
-        }
-
-        await confirmation.increment('attempts');
-        await confirmation.reload();
-
-        if (confirmation.attempts >= maxConfirmationAttempts) {
-          await confirmation.update({
-            codeLocked: true
-          });
-          throw new PermissionsError('Too many confirmation attempts');
-        } else if (confirmation && confirmation.code == data.code) {
-          return confirmation;
-        } else {
-          throw new PermissionsError('Invalid code');
-        }
+        return confirmation;
       }
     },
 
