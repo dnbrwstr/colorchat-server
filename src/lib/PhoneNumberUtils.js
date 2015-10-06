@@ -1,5 +1,5 @@
 import { PhoneNumberUtil } from 'google-libphonenumber';
-import { getFirstResult } from './Util';
+import { getFirstResult } from './FnUtils';
 
 let defaultRegion = process.env.DEFAULT_REGION;
 let numberUtil = PhoneNumberUtil.getInstance();

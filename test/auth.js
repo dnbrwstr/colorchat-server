@@ -10,7 +10,7 @@ var sinon = require('sinon'),
   ConfirmationCode = require('../src/models/ConfirmationCode'),
   User = require('../src/models/User'),
   twilio = require('../src/lib/twilio'),
-  mapTimes = require('../src/lib/Util').mapTimes;
+  mapTimes = require('../src/lib/FnUtils').mapTimes;
 
 var defaultNumberData = {
   baseNumber: '4013911814',
