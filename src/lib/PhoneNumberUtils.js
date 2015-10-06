@@ -4,17 +4,13 @@ import { getFirstResult } from './Util';
 let defaultRegion = process.env.DEFAULT_REGION;
 let numberUtil = PhoneNumberUtil.getInstance();
 
+export let makeString = n =>
+  `+${n.countryCode}${n.destinationCode}${n.baseNumber}`;
+
 export let validate = (number, countryCode) => {
   let region = numberUtil.getRegionCodeForCountryCode(countryCode);
-
-  try {
-    let parsedNumber = numberUtil.parse(number, region);
-    if (parsedNumber && numberUtil.isValidNumber(parsedNumber)) {
-      return true;
-    }
-  } catch (e) {}
-
-  return false;
+  let parsedNumber = getParsedNumber(number, region);
+  return parsedNumber && numberUtil.isValidNumber(parsedNumber);
 };
 
 export let normalize = (numberOrArray, userNumber) => {
@@ -29,10 +25,10 @@ let normalizeWithPermutations = (number, baseNumber) => {
     '+' + number
   ];
 
-  return getFirstResult(permutations, (n) => _normalize(n, baseNumber)) || null;
+  return getFirstResult(permutations, (n) => normalizeSingleNumber(n, baseNumber)) || null;
 };
 
-let _normalize = (number, userNumber) => {
+let normalizeSingleNumber = (number, userNumber) => {
   let baseNumberData = parse(userNumber);
   let baseRegion = baseNumberData ? baseNumberData.region : defaultRegion;
   let parsedNumberData = parse(number, baseRegion);
@@ -42,26 +38,32 @@ let _normalize = (number, userNumber) => {
 };
 
 let parse = (numberToParse, region=defaultRegion) => {
-  let number = null;
-
-  try {
-    number = numberUtil.parse(numberToParse, region);
-  } catch (e) {
-    return number;
-  }
+  let number = getParsedNumber(numberToParse, region);
+  if (!number) return number;
 
   let destinationCodeLength = numberUtil.getLengthOfNationalDestinationCode(number);
-  let nationalNumber = number.getNationalNumber();
-  let baseNumber = nationalNumber.toString().slice(destinationCodeLength);
+  let nationalNumber = number.getNationalNumber().toString();
+  let baseNumber = nationalNumber.slice(destinationCodeLength);
+  // If there's no area code just get the base number
   let destinationCode = destinationCodeLength ?
-    nationalNumber.toString().slice(0, destinationCodeLength) : null;
+    nationalNumber.slice(0, destinationCodeLength) : null;
 
-  return numberUtil.isPossibleNumber(number) ? {
+  return numberUtil.isPossibleNumber(number) && {
     countryCode: number.getCountryCodeOrDefault(),
-    baseNumber: baseNumber,
+    region: numberUtil.getRegionCodeForNumber(number),
     destinationCode: destinationCode,
-    region: numberUtil.getRegionCodeForNumber(number)
-  } : null;
+    baseNumber: baseNumber
+  };
+};
+
+// Parse wrapped to simplify use as libphonenumber
+// throws when it's unable to parse
+let getParsedNumber = (number, region) => {
+  try {
+    return numberUtil.parse(number, region);
+  } catch (e) {
+    return false;
+  }
 };
 
 let maybeCopyDestinationCode = (numberData, baseData) => {
@@ -75,6 +77,3 @@ let maybeCopyDestinationCode = (numberData, baseData) => {
     return numberData;
   }
 };
-
-let makeString = n =>
-  `+${n.countryCode}${n.destinationCode}${n.baseNumber}`;
