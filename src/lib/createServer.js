@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import http from 'http';
-import app from '../apps/main';
-import socketApp from '../apps/message';
+import app from '../api';
+import socketApp from '../messager';
 
 let createServer = (port=3000) => {
   let server = http.createServer(app);

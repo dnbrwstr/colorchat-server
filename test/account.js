@@ -5,7 +5,7 @@ var sinon = require('sinon'),
   expect = require('chai').expect,
   request = require('supertest-as-promised'),
   Promise = require('bluebird'),
-  app = require('../src/apps/main'),
+  app = require('../src/api'),
   db = require('../src/lib/db'),
   User = require('../src/models/User');
 
