@@ -10,9 +10,8 @@ import createRedisClient from '../lib/createRedisClient';
 import { sendMessageNotification } from '../lib/NotificationUtils';
 
 let userSockets = {};
-let redisClient = createRedisClient();
 
-redisClient.setDeliveryHandler(function (userId, messages, onDeliverySuccess) {
+let deliverMessages = function (userId, messages, onDeliverySuccess) {
   let socket = userSockets[userId];
 
   if (!socket) {
@@ -20,6 +19,10 @@ redisClient.setDeliveryHandler(function (userId, messages, onDeliverySuccess) {
   }
 
   socket.emit('messagedata', messages, onDeliverySuccess);
+}
+
+let redisClient = createRedisClient({
+  deliverMessages: deliverMessages
 });
 
 let app = io();
