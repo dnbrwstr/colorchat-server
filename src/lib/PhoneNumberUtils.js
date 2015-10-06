@@ -21,7 +21,7 @@ export let normalize = (numberOrArray, userNumber) => {
   return numberOrArray instanceof Array ?
     numberOrArray.map(n => normalize(n, userNumber)) :
     normalizeWithPermutations(numberOrArray, userNumber);
-}
+};
 
 let normalizeWithPermutations = (number, baseNumber) => {
   let permutations = [
@@ -30,7 +30,7 @@ let normalizeWithPermutations = (number, baseNumber) => {
   ];
 
   return getFirstResult(permutations, (n) => _normalize(n, baseNumber)) || null;
-}
+};
 
 let _normalize = (number, userNumber) => {
   let baseNumberData = parse(userNumber);
@@ -39,7 +39,7 @@ let _normalize = (number, userNumber) => {
 
   return parsedNumberData ?
     makeString(maybeCopyDestinationCode(parsedNumberData, baseNumberData)) : null;
-}
+};
 
 let parse = (numberToParse, region=defaultRegion) => {
   let number = null;
@@ -62,7 +62,7 @@ let parse = (numberToParse, region=defaultRegion) => {
     destinationCode: destinationCode,
     region: numberUtil.getRegionCodeForNumber(number)
   } : null;
-}
+};
 
 let maybeCopyDestinationCode = (numberData, baseData) => {
   if (!numberData.destinationCode &&
@@ -70,7 +70,7 @@ let maybeCopyDestinationCode = (numberData, baseData) => {
     return {
       ...numberData,
       destinationCode: baseData.destinationCode
-    }
+    };
   } else {
     return numberData;
   }

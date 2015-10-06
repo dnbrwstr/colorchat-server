@@ -9,6 +9,6 @@ let createServer = (port=3000) => {
   server.listen(port);
   console.log(chalk.green('Now listening on port ' + port));
   return server;
-}
+};
 
 export default createServer;

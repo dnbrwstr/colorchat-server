@@ -23,7 +23,7 @@ let User = db.define('User', {
 }, {
   classMethods: {
     createOrUpdateFromConfirmation: async confirmation => {
-      let tokenBuffer = await crypto.randomBytesAsync(64)
+      let tokenBuffer = await crypto.randomBytesAsync(64);
       let token = tokenBuffer.toString('hex');
 
       let user = await User.find({ where: { phoneNumber: confirmation.phoneNumber } });

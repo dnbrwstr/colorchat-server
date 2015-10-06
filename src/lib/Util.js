@@ -5,7 +5,7 @@ export let getFirstResult = (arr, fn) => {
       return result;
     }
   }
-}
+};
 
 export let mapTimes = (n, fn) => {
   var res = [];
@@ -13,4 +13,4 @@ export let mapTimes = (n, fn) => {
     res.push(fn(i));
   }
   return res;
-}
+};

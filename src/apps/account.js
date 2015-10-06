@@ -15,7 +15,7 @@ let rootValidator = {
 };
 
 app.put('/', authenticate, validate(rootValidator), wrapAsyncRoute(async function (req, res, next) {
-  let data = {}
+  let data = {};
 
   if (req.body.deviceToken) {
     data.deviceTokens = uniq(req.user.deviceTokens.concat(req.body.deviceToken));
@@ -25,8 +25,8 @@ app.put('/', authenticate, validate(rootValidator), wrapAsyncRoute(async functio
     data.name = req.body.name;
   }
 
- await req.user.update(data);
- res.send(200);
+  await req.user.update(data);
+  res.send(200);
 }));
 
 module.exports = app;

@@ -26,7 +26,7 @@ let createRedisClient = function () {
       // recipient on the client
       let userId = messageData[0].recipientId;
       let messageStrings = messageData.map(JSON.stringify);
-      let multi = client.multi()
+      let multi = client.multi();
 
       return multi.lpush.apply(multi, [getQueueKey(userId)].concat(messageStrings))
         .publish(getMessageEvent(userId), userId)
