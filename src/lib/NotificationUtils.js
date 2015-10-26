@@ -3,7 +3,8 @@ import getClosestColor from './getClosestColor';
 import logError from './logError';
 import User from '../models/User';
 
-export let getText = function (message) {
+export let getText = async function (message) {
+  let user = await User.findById(message.senderId);
   let sizeDescriptor, shape;
   let color = getClosestColor(message.color);
   let w = message.width;
@@ -19,16 +20,18 @@ export let getText = function (message) {
     shape = 'square';
   }
 
-  let text = 'A '
-  if (sizeDescriptor) text += sizeDescriptor + ', '
-  text += color + ' ';
-  text += shape;
-
-  return text;
+  return [
+    user.name,
+    'sent you a',
+    sizeDescriptor && sizeDescriptor + ',',
+    color,
+    shape
+  ].filter(i => !!i).join(' ');
 }
 
 export let sendMessageNotification = async function (message) {
   let user = await User.findById(message.recipientId);
+  let text = await getText(message);
   let url = "https://api.parse.com/1/push";
 
   let data = JSON.stringify({
@@ -39,7 +42,7 @@ export let sendMessageNotification = async function (message) {
       }
     },
     data: {
-      alert: getText(message),
+      alert: text,
       badge: 'increment',
       sound: 'cheering.caf',
       type: 'message',
