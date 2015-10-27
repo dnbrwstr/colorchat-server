@@ -10,7 +10,7 @@ machine:
     REDIS_URL: redis://127.0.0.1:6379/2
 deployment:
   hub:
-    branch: circle
+    branch: master
     commands:
       - docker build -t dnbrwstr/colorchat-server .
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
