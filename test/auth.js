@@ -92,13 +92,18 @@ describe('auth', function () {
     });
 
     it('Locks code creation after 20 attempts', function (done) {
-      Promise.all(mapTimes(21, function () {
+      ConfirmationCode.find(defaultNumberQuery).then(function (confirmation) {
+        return confirmation.update({
+          codesCreated: 20
+        });
+      }).then(function () {
         return agent.post('/auth')
-          .send(defaultNumberData);
-      })).catch(function (data) {
-        expect(data.response.status).to.equal(403);
+          .send(defaultNumberData)
+          .toPromise();
+      }).then(function (res) {
+        expect(res.status).to.equal(403);
         done();
-      });
+      })
     });
   });
 
@@ -106,7 +111,7 @@ describe('auth', function () {
     beforeEach(function (done) {
       db.sync({ force: true}).then(function () {
         ConfirmationCode.bulkCreate([{
-          phoneNumber: '+14013911814',
+          phoneNumber: defaultPhoneNumber,
           code: '555555'
         }, {
           phoneNumber: '+15555555',
@@ -120,7 +125,7 @@ describe('auth', function () {
     it('Throws an error if invalid credentials are submitted', function (done) {
       agent.post('/auth/confirm')
         .send({
-          phoneNumber: '+14013911814',
+          phoneNumber: defaultPhoneNumber,
           code: '555554'
         })
         .expect(403)
@@ -130,7 +135,7 @@ describe('auth', function () {
     it('Creates a new user if valid credentials are submitted', function (done) {
       agent.post('/auth/confirm')
         .send({
-          phoneNumber: '+14013911814',
+          phoneNumber: defaultPhoneNumber,
           code: 555555
         })
         .expect(200)
@@ -145,12 +150,12 @@ describe('auth', function () {
 
     it('Adds token to existing user if possible', function (done) {
       User.create({
-        phoneNumber: '+14013911814',
+        phoneNumber: defaultPhoneNumber,
         tokens: ['aaa']
       }).then(function () {
         agent.post('/auth/confirm')
           .send({
-            phoneNumber: '+14013911814',
+            phoneNumber: defaultPhoneNumber,
             code: '555555'
           })
           .end(function () {
@@ -164,14 +169,19 @@ describe('auth', function () {
     });
 
     it('Locks code after 6 failed attempts to confirm', function (done) {
-      Promise.all(mapTimes(7, function () {
+      ConfirmationCode.find(defaultNumberQuery).then(function (confirmation) {
+        return confirmation.update({
+          attempts: 6,
+          code: '555555'
+        });
+      }).then(function () {
         return agent.post('/auth/confirm')
           .send({
-            phoneNumber: '+15555555',
+            phoneNumber: defaultPhoneNumber,
             code: '555555'
           });
-      })).catch(function (data) {
-        expect(data.response.status).to.equal(403);
+      }).then(function (res) {
+        expect(res.status).to.equal(403);
         done();
       });
     });
