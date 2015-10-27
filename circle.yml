@@ -16,6 +16,6 @@ deployment:
       - docker login -e $DOCKER_EMAIL -u $DOCKER_USER -p $DOCKER_PASS
       - docker push dnbrwstr/colorchat-server
       - |
-        ssh core@52.91.254.210 <<ENDSSH
-        kubectl rolling-update colorchat-server --image=dnbrwstr/colorchat-server:latest
+        ssh core@colorchat-server.color.slow.so <<ENDSSH
+        rolling-restart
         ENDSSH
