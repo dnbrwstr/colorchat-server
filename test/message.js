@@ -2,7 +2,6 @@ require('./helpers/configure');
 
 var sinon = require('sinon'),
   R = require('ramda'),
-  redis = require('redis'),
   io = require('socket.io-client'),
   sinonAsPromised = require('sinon-as-promised'),
   expect = require('chai').expect,
@@ -11,10 +10,7 @@ var sinon = require('sinon'),
   db = require('../src/lib/db'),
   User = require('../src/models/User'),
   createServer = require('../src/lib/createServer'),
-  createRedisClient = require('../src/lib/createRedisClient');
-
-var redisClient = redis.createClient(process.env.REDIS_URL);
-var appRedisClient = createRedisClient();
+  amqp = require('amqplib');
 
 var testUserData = [{
   number: '+14013911814',
@@ -76,10 +72,19 @@ describe('messaging', function () {
     };
   };
 
+  var resetPendingMessages = function () {
+    return amqp.connect().then(function (connection) {
+      return connection.createChannel().then(function (channel) {
+        return [ channel.purgeQueue('user-1'),
+                 channel.purgeQueue('user-2') ];
+      });
+    });
+  };
+
   beforeEach(function (done) {
     db.options.logging = null;
 
-    redisClient.flushdbAsync()
+    resetPendingMessages()
       .then(function () {
         return db.sync({ force: true});
       })
@@ -133,28 +138,28 @@ describe('messaging', function () {
     var cb = runOnAttempt(2, function () {
       secondClient.emit('messagedata', createMessage(1, 0));
 
-      secondClient.on('messagedata', function (message) {
+      secondClient.on('messagedata', function () {
         done(new Error('Second client should not receive own message'))
       });
 
-      firstClient.on('messagedata', function (message) {
+      firstClient.on('messagedata', function () {
         done();
       });
     });
 
-    var firstClient = clientForUser(0).on('messagedata', cb);
-    var secondClient = clientForUser(1).on('messagedata', cb);
+    var firstClient = clientForUser(0).on('connect', cb);
+    var secondClient = clientForUser(1).on('connect', cb);
   });
 
   it('Stores message if recipient isnt available', function (done) {
     var client = clientForUser(0);
-
     var messageData = createMessage(0, 1);
 
     client.on('connect', function () {
-      client.emit('messagedata', messageData, function (m) {
-        appRedisClient.getPendingMessages(users[1].id).then(function (messages) {
-          expect(messages.length).to.equal(1);
+      client.emit('messagedata', messageData, function () {
+        var partnerClient = clientForUser(1);
+
+        partnerClient.on('messagedata', function (data) {
           done();
         });
       });
@@ -169,9 +174,10 @@ describe('messaging', function () {
     });
 
     var cb = runOnAttempt(3, function () {
-      clientForUser(1).on('messagedata', function (messages, cb) {
-        expect(messages.length).to.equal(3);
-        done();
+      var doneCb = runOnAttempt(3, done);
+
+      clientForUser(1).on('messagedata', function (data, ack) {
+        doneCb();
       });
     });
   });
@@ -182,6 +188,7 @@ describe('messaging', function () {
     });
 
     clients = [];
+
     done();
   });
 });
