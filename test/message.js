@@ -11,6 +11,7 @@ var sinon = require('sinon'),
   User = require('../src/models/User'),
   createServer = require('../src/lib/createServer'),
   amqp = require('amqplib');
+  exec = require('child_process').exec;
 
 var testUserData = [{
   number: '+14013911814',
@@ -75,9 +76,11 @@ describe('messaging', function () {
   var resetPendingMessages = function () {
     return amqp.connect().then(function (connection) {
       return connection.createChannel().then(function (channel) {
-        return [ channel.purgeQueue('user-1'),
-                 channel.purgeQueue('user-2') ];
-      });
+        return channel.assertQueue('user-1')
+          .then(channel.assertQueue('user-2'))
+          .then(channel.purgeQueue('user-1'))
+          .then(channel.purgeQueue('user-2'))
+        });
     });
   };
 
@@ -137,7 +140,6 @@ describe('messaging', function () {
   it('Sends a message', function (done) {
     var cb = runOnAttempt(2, function () {
       secondClient.emit('messagedata', createMessage(1, 0));
-
       secondClient.on('messagedata', function () {
         done(new Error('Second client should not receive own message'))
       });
@@ -147,8 +149,8 @@ describe('messaging', function () {
       });
     });
 
-    var firstClient = clientForUser(0).on('connect', cb);
-    var secondClient = clientForUser(1).on('connect', cb);
+    var firstClient = clientForUser(0).on('ready', cb);
+    var secondClient = clientForUser(1).on('ready', cb);
   });
 
   it('Stores message if recipient isnt available', function (done) {

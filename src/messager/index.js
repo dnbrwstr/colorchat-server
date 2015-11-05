@@ -8,73 +8,78 @@ import logError from '../lib/logError';
 import { sendMessageNotification } from '../lib/NotificationUtils';
 import wrap from '../lib/wrapSocketMiddleware';
 import authenticate from '../lib/authenticateSocket';
-import { processMessageData } from '../lib/MessageUtils';
+import { processMessageData, logMessage } from '../lib/MessageUtils';
 import createMessageClient from '../lib/createMessageClient';
+import { ap, partial, always } from 'ramda';
 
-let userSockets = {};
-
-// Middleware
+let makeArray = o => o instanceof Array ? o : [o];
 
 let handleError = function (socket, next) {
   socket.on('error', logError);
   next();
 };
 
-let handleConnection = async function (socket, next) {
-  let userId = socket.user.id;
-  userSockets[userId] = socket;
-  messageClient.subscribeToUserMessages(userId);
-
-  socket.on('messagedata', wrap(async function (messageData, cb) {
-    let processedMessages = getProcessedMessages(messageData, userId);
-    processedMessages.forEach(m => {
-      sendMessageNotification(m);
-      logMessage(m);
-      messageClient.sendMessage(m.recipientId, m);
-    });
-    cb && cb(processedMessages);
-  }));
-
-  socket.on('disconnect', () => {
-    messageClient.unsubscribeFromUserMessages(userId);
-    delete userSockets[userId];
-  });
-};
-
-let getProcessedMessages = (messageData, userId) => {
-  if (!(messageData instanceof Array)) {
-    messageData = [messageData];
-  }
-
+let processMessages = (messageData, userId) => {
   return messageData.map(m => {
     m.senderId = userId;
     return processMessageData(m);
   });
 };
 
-let logMessage = message => {
-  let { senderId, recipientId } = message;
-  console.log(chalk.blue('Message:', senderId, '=>', recipientId));
-};
+let createMessageApp = async function () {
+  let userSockets = {};
+  let messageClient;
 
-let app = io();
+  let addUserSocket = async function (userId, socket) {
+    userSockets[userId] = socket;
+    await messageClient.subscribeToUserMessages(userId);
+  };
 
-let messageClient = createMessageClient();
+  let removeUserSocket = function (userId) {
+    messageClient.unsubscribeFromUserMessages(userId);
+    delete userSockets[userId];
+  };
 
-messageClient.onReady(function () {
+  let deliverMessageToUserSocket = function (message, ack) {
+    let socket = userSockets[message.recipientId];
+
+    if (!socket) {
+      throw new ServerError('Trying to deliver message on a nonexistent socket for user ' + userId);
+    }
+
+    socket.emit('messagedata', message, ack);
+  };
+
+  let handleMessage = function (userId, messageData, cb) {
+    let messages = processMessages(makeArray(messageData), userId);
+    sendMessages(messages);
+    cb && cb(messages);
+  };
+
+  let sendMessages = function (messages) {
+    ap([
+      sendMessageNotification,
+      logMessage,
+      m => messageClient.sendMessage(m.recipientId, m)
+    ], messages);
+  };
+
+  let handleConnection = async function (socket, next) {
+    let userId = socket.user.id;
+    socket.on('messagedata', partial(handleMessage, userId));
+    socket.on('disconnect', partial(removeUserSocket, userId));
+    await addUserSocket(userId, socket);
+    socket.emit('ready');
+  };
+
+  messageClient = await createMessageClient();
+  messageClient.onMessage(deliverMessageToUserSocket);
+
+  let app = io();
   app.use(handleError);
   app.use(wrap(authenticate));
   app.on('connection', wrap(handleConnection));
-});
+  return app;
+};
 
-messageClient.onMessage(function (message, ack) {
-  let socket = userSockets[message.recipientId];
-
-  if (!socket) {
-    throw new ServerError('Trying to deliver message on a nonexistent socket for user ' + userId);
-  }
-
-  socket.emit('messagedata', message, ack);
-});
-
-export default app
+export default createMessageApp;

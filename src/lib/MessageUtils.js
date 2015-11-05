@@ -1,4 +1,5 @@
 import { merge, pick } from 'ramda';
+import chalk from 'chalk';
 import uuid from 'uuid';
 
 export let processMessageData = messageData => {
@@ -11,10 +12,14 @@ export let processMessageData = messageData => {
     'width',
     'height'
   ];
-  let id = uuid.v4();
 
   return pick(allowedKeys, merge(messageData, {
-    id,
+    id: uuid.v4(),
     createdAt: new Date()
   }));
 };
+
+export let logMessage = message => {
+  let { senderId, recipientId } = message;
+  console.log(chalk.blue('Message:', senderId, '=>', recipientId));
+}

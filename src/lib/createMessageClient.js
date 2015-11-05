@@ -1,41 +1,31 @@
-var amqp = require('amqplib');
+import amqp from 'amqplib';
+import { once, partial } from 'ramda';
 
-var createMessageClient = function () {
-  var messageCallbacks = [];
-  var readyCallbacks = [];
-  var consumers = {};
-  var queue = 'messages';
-  var exchange = 'colorchat';
-  var connection = null;
-  var channel = null;
+let createMessageClient = async function () {
+  let id = Math.random();
+  let messageCallbacks = [];
+  let consumers = {};
+  let exchange = 'colorchat';
 
-  amqp.connect().then(function (_connection) {
-    connection = _connection;
-    connection.createChannel().then(function (_channel) {
-      channel = _channel;
-      channel.assertExchange(exchange, 'direct', { durable: true, autoDelete: false });
-      triggerReadyCallbacks();
-    });
-  });
+  let connection = await amqp.connect();
+  let channel = await connection.createChannel();
 
-  function triggerReadyCallbacks () {
-    readyCallbacks.forEach(function (cb) {
-      cb();
-    });
-  }
+  await channel.assertExchange(
+    exchange,
+    'direct',
+    { durable: true, autoDelete: false }
+  );
 
   function handleMessage (message) {
-    var messageData = decodeMessage(message);
-    var delivered = false;
+    let ack = once(partial(channel.ack, message));
+    let messageData = decodeMessage(message);
+
     messageCallbacks.forEach(function (cb) {
-      cb(messageData, function () {
-        if (!delivered) {
-          delivered = true;
-          channel.ack(message);
-        }
-      });
+      cb(messageData, ack);
     });
   }
+
+  let getQueueHandle = userId => `user-${userId}`;
 
   function encodeMessage (message) {
     return new Buffer(JSON.stringify(message));
@@ -46,35 +36,30 @@ var createMessageClient = function () {
   }
 
   return {
-    onReady: function (cb) {
-      readyCallbacks.push(cb);
-    },
-
-    sendMessage: function (userId, message) {
-      var queueHandle = 'user-' + userId;
-      channel.publish(exchange, queueHandle, encodeMessage(message), { persistent: true });
+    sendMessage: async function (userId, message) {
+      await channel.publish(
+        exchange,
+        getQueueHandle(userId),
+        encodeMessage(message),
+        { persistent: true }
+      );
     },
 
     onMessage: function (cb) {
       messageCallbacks.push(cb);
     },
 
-    subscribeToUserMessages: function (userId) {
-      var queueHandle = 'user-' + userId;
-      channel.assertQueue(queueHandle);
-      channel.bindQueue(queueHandle, exchange, queueHandle);
-      channel.consume(queueHandle, handleMessage).then(function (consumer) {
-        consumers[userId] = consumer.consumerTag;
-      });
+    subscribeToUserMessages: async function (userId) {
+      let queueHandle = getQueueHandle(userId);
+      await channel.assertQueue(queueHandle);
+      await channel.bindQueue(queueHandle, exchange, queueHandle);
+      let consumer = await channel.consume(queueHandle, handleMessage);
+      consumers[userId] = consumer.consumerTag;
     },
 
-    unsubscribeFromUserMessages: function (userId) {
-      channel.cancel(consumers[userId]);
+    unsubscribeFromUserMessages: async function (userId) {
+      await channel.cancel(consumers[userId]);
       consumers[userId] = null;
-    },
-
-    disconnect: function () {
-      connection.close();
     }
   };
 };
