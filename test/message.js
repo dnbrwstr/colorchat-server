@@ -10,7 +10,7 @@ var sinon = require('sinon'),
   db = require('../src/lib/db'),
   User = require('../src/models/User'),
   createServer = require('../src/lib/createServer'),
-  amqp = require('amqplib');
+  amqp = require('amqplib'),
   exec = require('child_process').exec;
 
 var testUserData = [{
