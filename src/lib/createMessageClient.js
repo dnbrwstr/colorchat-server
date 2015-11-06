@@ -19,7 +19,6 @@ let createMessageClient = async function () {
   function handleMessage (message) {
     let ack = once(partial(channel.ack.bind(channel), message));
     let messageData = decodeMessage(message);
-    console.log('got', messageData)
 
     messageCallbacks.forEach(function (cb) {
       cb(messageData, ack);
@@ -38,7 +37,6 @@ let createMessageClient = async function () {
 
   return {
     sendMessage: async function (userId, message) {
-      console.log('Sending', userId, message);
       await channel.publish(
         exchange,
         getQueueHandle(userId),

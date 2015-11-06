@@ -2,7 +2,7 @@ import { merge, pick } from 'ramda';
 import chalk from 'chalk';
 import uuid from 'uuid';
 
-export let processMessageData = messageData => {
+export let processChatMessageData = messageData => {
   let allowedKeys = [
     'id',
     'senderId',
@@ -19,7 +19,7 @@ export let processMessageData = messageData => {
   }));
 };
 
-export let logMessage = message => {
+export let logChatMessage = message => {
   let { senderId, recipientId } = message;
   console.log(chalk.blue('Message:', senderId, '=>', recipientId));
 }

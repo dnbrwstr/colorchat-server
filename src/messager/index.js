@@ -5,12 +5,12 @@ import io from 'socket.io';
 import { ServerError } from '../lib/errors';
 import User from '../models/User';
 import logError from '../lib/logError';
-import { sendMessageNotification } from '../lib/NotificationUtils';
+import { sendChatMessageNotification } from '../lib/NotificationUtils';
 import wrap from '../lib/wrapSocketMiddleware';
 import authenticate from '../lib/authenticateSocket';
-import { processMessageData, logMessage } from '../lib/MessageUtils';
+import { processChatMessageData, logChatMessage } from '../lib/MessageUtils';
 import createMessageClient from '../lib/createMessageClient';
-import { ap, partial, always } from 'ramda';
+import { ap, partial, always, set , _, lensProp, merge } from 'ramda';
 
 let makeArray = o => o instanceof Array ? o : [o];
 
@@ -30,6 +30,8 @@ let createMessageApp = async function () {
   let userSockets = {};
   let messageClient;
 
+  // Socket management
+
   let addUserSocket = async function (userId, socket) {
     userSockets[userId] = socket;
     await messageClient.subscribeToUserMessages(userId);
@@ -40,40 +42,59 @@ let createMessageApp = async function () {
     delete userSockets[userId];
   };
 
-  let deliverMessageToUserSocket = function (message, ack) {
-    let socket = userSockets[message.recipientId];
+  // Handle messages from socket
+
+  let handleCompose = function (userId, data, cb) {
+    sendMessage('composeevent', data.recipientId, merge(data, { senderId: userId }));
+    cb && cb(data);
+  };
+
+  let handleChat = function (userId, data, cb) {
+    let chats = makeArray(data)
+      .map(processChatMessageData)
+      .map(set(lensProp('senderId'), userId))
+
+    ap([
+      sendChatMessageNotification,
+      logChatMessage,
+      m => sendMessage('messagedata', m.recipientId, m)
+    ], chats);
+
+    cb && cb(chats);
+  };
+
+  let sendMessage = function (type, recipientId, data) {
+    messageClient.sendMessage(recipientId, {
+      type,
+      content: data
+    });
+  };
+
+  // Handle messages from queue
+
+  let handleReceiveMessage = function (message, ack) {
+    let socket = userSockets[message.content.recipientId];
 
     if (!socket) {
-      throw new ServerError('Trying to deliver message on a nonexistent socket for user ' + userId);
+      throw new ServerError('Trying to deliver message on a nonexistent socket for user ' + message.content.recipientId);
     }
 
-    socket.emit('messagedata', message, ack);
+    socket.emit(message.type, message.content, ack);
   };
 
-  let handleMessage = function (userId, messageData, cb) {
-    let messages = processMessages(makeArray(messageData), userId);
-    sendMessages(messages);
-    cb && cb(messages);
-  };
-
-  let sendMessages = function (messages) {
-    ap([
-      sendMessageNotification,
-      logMessage,
-      m => messageClient.sendMessage(m.recipientId, m)
-    ], messages);
-  };
+  // Application setup
 
   let handleConnection = async function (socket, next) {
     let userId = socket.user.id;
-    socket.on('messagedata', partial(handleMessage, userId));
+    socket.on('messagedata', partial(handleChat, userId));
+    socket.on('composeevent', partial(handleCompose, userId));
     socket.on('disconnect', partial(removeUserSocket, userId));
     await addUserSocket(userId, socket);
     socket.emit('ready');
   };
 
   messageClient = await createMessageClient();
-  messageClient.onMessage(deliverMessageToUserSocket);
+  messageClient.onMessage(handleReceiveMessage);
 
   let app = io();
   app.use(handleError);

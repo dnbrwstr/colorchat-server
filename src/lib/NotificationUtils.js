@@ -29,7 +29,7 @@ export let getText = async function (message) {
   ].filter(i => !!i).join(' ');
 }
 
-export let sendMessageNotification = async function (message) {
+export let sendChatMessageNotification = async function (message) {
   let user = await User.findById(message.recipientId);
   let text = await getText(message);
   let url = "https://api.parse.com/1/push";
