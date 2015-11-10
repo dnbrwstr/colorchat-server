@@ -1,6 +1,8 @@
 import amqp from 'amqplib';
 import { once, partial, merge } from 'ramda';
 
+const REQUEUE_TIMEOUT = 5000;
+
 let createMessageClient = async function () {
   let id = Math.random();
   let messageCallbacks = [];
@@ -17,8 +19,16 @@ let createMessageClient = async function () {
   );
 
   function handleMessage (message) {
-    let ack = once(partial(channel.ack.bind(channel), message));
     let messageData = decodeMessage(message);
+
+    let requeueTimeout = setTimeout(() => {
+      channel.nack(message);
+    }, REQUEUE_TIMEOUT);
+
+    let ack = once(() => {
+      clearTimeout(requeueTimeout);
+      channel.ack(message);
+    });
 
     messageCallbacks.forEach(function (cb) {
       cb(messageData, ack);
