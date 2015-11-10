@@ -48,9 +48,9 @@ let createMessageApp = async function () {
     sendMessage(
       'composeevent',
       data.recipientId,
-      merge(data, { senderId: userId },
-      { expiration: 3000 }
-    ));
+      merge(data, { senderId: userId }),
+      { expiration: 500 , persistent: false }
+    );
     cb && cb(data);
   };
 
@@ -68,11 +68,11 @@ let createMessageApp = async function () {
     cb && cb(chats);
   };
 
-  let sendMessage = function (type, recipientId, data) {
+  let sendMessage = function (type, recipientId, data, options) {
     messageClient.sendMessage(recipientId, {
       type,
       content: data
-    });
+    }, options);
   };
 
   // Handle messages from queue

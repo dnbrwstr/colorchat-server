@@ -36,6 +36,7 @@ let createMessageClient = async function () {
   }
 
   let getQueueHandle = userId => `user-${userId}`;
+  let getComposeBinding = userId => getQueueHandle(userId) + '-compose';
 
   function encodeMessage (message) {
     return new Buffer(JSON.stringify(message));
@@ -46,12 +47,19 @@ let createMessageClient = async function () {
   }
 
   return {
-    sendMessage: async function (userId, message, options) {
+    sendMessage: async function (userId, message, opts) {
+      let options = merge({
+        persistent: true
+      }, opts);
+
+      let patternFn = message.type === 'composeevent' ?
+        getComposeBinding : getQueueHandle;
+
       await channel.publish(
         exchange,
-        getQueueHandle(userId),
+        patternFn(userId),
         encodeMessage(message),
-        merge({ persistent: true }, options)
+        options
       );
     },
 
@@ -63,11 +71,14 @@ let createMessageClient = async function () {
       let queueHandle = getQueueHandle(userId);
       await channel.assertQueue(queueHandle);
       await channel.bindQueue(queueHandle, exchange, queueHandle);
+      await channel.bindQueue(queueHandle, exchange, getComposeBinding(userId));
       let consumer = await channel.consume(queueHandle, handleMessage);
       consumers[userId] = consumer.consumerTag;
     },
 
     unsubscribeFromUserMessages: async function (userId) {
+      let queueHandle = getQueueHandle(userId);
+      await channel.unbindQueue(queueHandle, exchange, getComposeBinding(userId));
       await channel.cancel(consumers[userId]);
       consumers[userId] = null;
     }
