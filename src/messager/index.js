@@ -45,7 +45,12 @@ let createMessageApp = async function () {
   // Handle messages from socket
 
   let handleCompose = function (userId, data, cb) {
-    sendMessage('composeevent', data.recipientId, merge(data, { senderId: userId }));
+    sendMessage(
+      'composeevent',
+      data.recipientId,
+      merge(data, { senderId: userId },
+      { expiration: 3000 }
+    ));
     cb && cb(data);
   };
 

@@ -1,5 +1,5 @@
 import amqp from 'amqplib';
-import { once, partial } from 'ramda';
+import { once, partial, merge } from 'ramda';
 
 let createMessageClient = async function () {
   let id = Math.random();
@@ -36,12 +36,12 @@ let createMessageClient = async function () {
   }
 
   return {
-    sendMessage: async function (userId, message) {
+    sendMessage: async function (userId, message, options) {
       await channel.publish(
         exchange,
         getQueueHandle(userId),
         encodeMessage(message),
-        { persistent: true }
+        merge({ persistent: true }, options)
       );
     },
 
