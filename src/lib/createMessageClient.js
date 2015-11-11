@@ -9,7 +9,7 @@ let createMessageClient = async function () {
   let consumers = {};
   let exchange = 'colorchat';
 
-  let connection = await amqp.connect();
+  let connection = await amqp.connect(process.env.RABBITMQ_URL);
   let channel = await connection.createChannel();
 
   await channel.assertExchange(
