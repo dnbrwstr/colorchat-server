@@ -1,4 +1,3 @@
-import redis from 'redis';
 import uuid from 'uuid';
 import chalk from 'chalk';
 import io from 'socket.io';
