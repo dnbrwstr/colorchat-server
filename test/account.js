@@ -64,4 +64,18 @@ describe('account', function () {
         });
       })
   });
+
+  it('Destroys a user account', function (done) {
+    agent.delete('/account')
+      .set(authHeaders)
+      .expect(200)
+      .end(function (err, res) {
+        if (err) throw err;
+
+        User.findAll().then(function (users) {
+          expect(users.length).to.equal(0);
+          done();
+        });
+      });
+  });
 });

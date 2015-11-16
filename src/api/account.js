@@ -2,7 +2,7 @@ import express from 'express';
 import validate from 'express-validation';
 import Joi from 'joi';
 import { uniq } from 'ramda';
-import wrapAsyncRoute from '../lib/wrapAsyncRoute';
+import wrap from '../lib/wrapAsyncRoute';
 import authenticate from '../lib/authenticate';
 
 let app = express();
@@ -14,11 +14,11 @@ let rootValidator = {
   }
 };
 
-app.get('/', authenticate, wrapAsyncRoute(async function (req, res, next) {
+app.get('/', authenticate, wrap(async function (req, res, next) {
   res.send(req.user.serialize());
 }));
 
-app.put('/', authenticate, validate(rootValidator), wrapAsyncRoute(async function (req, res, next) {
+app.put('/', authenticate, validate(rootValidator), wrap(async function (req, res, next) {
   let data = {};
 
   if (req.body.deviceToken) {
@@ -31,6 +31,11 @@ app.put('/', authenticate, validate(rootValidator), wrapAsyncRoute(async functio
 
   await req.user.update(data);
   res.send(req.user.serialize());
+}));
+
+app.delete('/', authenticate, wrap(async function (req, res, next) {
+  await req.user.destroy();
+  res.send(200);
 }));
 
 module.exports = app;
