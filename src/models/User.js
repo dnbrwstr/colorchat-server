@@ -1,5 +1,6 @@
 import Sequelize from 'sequelize';
 import crypto from 'crypto';
+import { pick } from 'ramda';
 import db from '../lib/db';
 
 let User = db.define('User', {
@@ -58,6 +59,11 @@ let User = db.define('User', {
       } });
 
       return user;
+    }
+  },
+  instanceMethods: {
+    serialize: function () {
+      return pick(['id', 'name', 'phoneNumber'], this.get());
     }
   }
 });

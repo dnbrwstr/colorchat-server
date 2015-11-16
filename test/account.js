@@ -34,6 +34,19 @@ describe('account', function () {
     });
   });
 
+  it('Returns user inf', function (done) {
+    agent.get('/account')
+      .set(authHeaders)
+      .expect(200)
+      .end(function (err, res) {
+        if (err) throw err;
+        var user = res.body;
+        expect(user).to.have.keys(['id', 'name', 'phoneNumber']);
+        expect(user).to.not.have.keys(['tokens', 'deviceTokens']);
+        done();
+      })
+  })
+
   it('Updates the device token', function (done) {
     agent.put('/account')
       .set(authHeaders)

@@ -14,6 +14,10 @@ let rootValidator = {
   }
 };
 
+app.get('/', authenticate, wrapAsyncRoute(async function (req, res, next) {
+  res.send(req.user.serialize());
+}));
+
 app.put('/', authenticate, validate(rootValidator), wrapAsyncRoute(async function (req, res, next) {
   let data = {};
 
