@@ -30,7 +30,7 @@ app.put('/', authenticate, validate(rootValidator), wrapAsyncRoute(async functio
   }
 
   await req.user.update(data);
-  res.send(200);
+  res.send(req.user.serialize());
 }));
 
 module.exports = app;
