@@ -43,7 +43,7 @@ export let sendChatMessageNotification = async function (message) {
     },
     data: {
       alert: text,
-      badge: 'increment',
+      badge: 'Increment',
       sound: 'cheering.caf',
       type: 'message',
       messageId: message.id,
