@@ -1,5 +1,6 @@
 import amqp from 'amqplib';
 import { once, partial, merge } from 'ramda';
+import UserActionQueue from './UserActionQueue';
 
 const REQUEUE_TIMEOUT = 5000;
 
@@ -8,6 +9,7 @@ let createMessageClient = async function () {
   let messageCallbacks = [];
   let consumers = {};
   let exchange = 'colorchat';
+  let queue = new UserActionQueue();
 
   let connection = await amqp.connect(process.env.RABBITMQ_URL);
   let channel = await connection.createChannel();
@@ -67,20 +69,34 @@ let createMessageClient = async function () {
       messageCallbacks.push(cb);
     },
 
-    subscribeToUserMessages: async function (userId) {
-      let queueHandle = getQueueHandle(userId);
-      await channel.assertQueue(queueHandle);
-      await channel.bindQueue(queueHandle, exchange, queueHandle);
-      await channel.bindQueue(queueHandle, exchange, getComposeBinding(userId));
-      let consumer = await channel.consume(queueHandle, handleMessage);
-      consumers[userId] = consumer.consumerTag;
+    subscribeToUserMessages: function (userId) {
+      return new Promise((resolve, reject) => {
+        queue.enqueueAction(userId, async () => {
+          if (consumers[userId]) return;
+
+          let queueHandle = getQueueHandle(userId);
+          await channel.assertQueue(queueHandle);
+          await channel.bindQueue(queueHandle, exchange, queueHandle);
+          await channel.bindQueue(queueHandle, exchange, getComposeBinding(userId));
+          let consumer = await channel.consume(queueHandle, handleMessage);
+          consumers[userId] = consumer.consumerTag;
+          resolve();
+        })
+      });
     },
 
-    unsubscribeFromUserMessages: async function (userId) {
-      let queueHandle = getQueueHandle(userId);
-      await channel.unbindQueue(queueHandle, exchange, getComposeBinding(userId));
-      await channel.cancel(consumers[userId]);
-      consumers[userId] = null;
+    unsubscribeFromUserMessages: function (userId) {
+      return new Promise((resolve, reject) => {
+        queue.enqueueAction(userId, async () => {
+          if (!consumers[userId]) return;
+
+          let queueHandle = getQueueHandle(userId);
+          await channel.unbindQueue(queueHandle, exchange, getComposeBinding(userId));
+          await channel.cancel(consumers[userId]);
+          consumers[userId] = null;
+          resolve();
+        });
+      });
     }
   };
 };
