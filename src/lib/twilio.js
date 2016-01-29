@@ -8,7 +8,7 @@ export default {
     return client.sms.messages.post({
       to: options.phoneNumber,
       from: process.env.TWILIO_NUMBER,
-      body: options.code + 'is your ColorChat confirmation code'
+      body: options.code + ' is your ColorChat confirmation code'
     });
   },
 
