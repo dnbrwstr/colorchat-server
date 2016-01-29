@@ -47,7 +47,8 @@ export let sendChatMessageNotification = async function (message) {
       sound: 'cheering.caf',
       type: 'message',
       messageId: message.id,
-      senderId: message.senderId
+      senderId: message.senderId,
+      message
     }
   });
 
