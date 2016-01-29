@@ -53,7 +53,7 @@ export let sendChatMessageNotification = async function (message) {
     }
   });
 
-  fetch(url, {
+  let res = await fetch(url, {
     method: 'post',
     headers: {
       'X-Parse-Application-Id': process.env.PARSE_APPLICATION_ID,
@@ -61,9 +61,10 @@ export let sendChatMessageNotification = async function (message) {
       'Content-Type': 'application/json'
     },
     body: data
-  }).then(function (res) {
-    if (res.status !== 200) {
-      res.text().then(logError);
-    }
   });
+
+  if (res.status !== 200) {
+    let text = await res.text();
+    logError(text);
+  }
 };
