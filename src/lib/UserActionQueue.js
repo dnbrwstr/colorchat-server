@@ -15,10 +15,8 @@ class UserActionQueue {
 
   async stepUserQueue(userId) {
     if (!this.actions[userId].length) return;
-    // We assume that the most recent command
-    // dictates our desired end state
     let nextAction = this.actions[userId][0];
-    this.actions[userId] = [];
+    this.actions[userId] = this.actions[userId].slice(1);
     await nextAction();
   }
 }
