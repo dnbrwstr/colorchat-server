@@ -16,8 +16,9 @@ class UserActionQueue {
   async stepUserQueue(userId) {
     if (!this.actions[userId].length) return;
     let nextAction = this.actions[userId][0];
-    this.actions[userId] = this.actions[userId].slice(1);
     await nextAction();
+    this.actions[userId] = this.actions[userId].slice(0, -1);
+    this.stepUserQueue(userId);
   }
 }
 
