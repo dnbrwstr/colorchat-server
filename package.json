@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "description": "ColorChat server application",
   "main": "index.js",
+  "engines": {
+    "node": ">= 5.4.0"
+  },
   "scripts": {
     "test": "mocha test",
     "start": "node src/init"
