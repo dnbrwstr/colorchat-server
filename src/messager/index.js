@@ -53,10 +53,11 @@ let createMessageApp = async function () {
     cb && cb(data);
   };
 
-  let handleChat = function (userId, data, cb) {
+  let handleChat = function (user, data, cb) {
     let chats = makeArray(data)
       .map(processChatMessageData)
-      .map(set(lensProp('senderId'), userId))
+      .map(set(lensProp('senderName'), user.name))
+      .map(set(lensProp('senderId'), user.id))
 
     ap([
       sendChatMessageNotification,
@@ -90,7 +91,7 @@ let createMessageApp = async function () {
 
   let handleConnection = async function (socket, next) {
     let userId = socket.user.id;
-    socket.on('messagedata', partial(handleChat, userId));
+    socket.on('messagedata', partial(handleChat, socket.user));
     socket.on('composeevent', partial(handleCompose, userId));
     socket.on('disconnect', partial(removeUserSocket, userId));
     await addUserSocket(userId, socket);
