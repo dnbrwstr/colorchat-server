@@ -71,8 +71,14 @@ let createMessageClient = async function () {
 
     subscribeToUserMessages: function (userId) {
       return new Promise((resolve, reject) => {
+        console.log('enqueue subscribe', userId);
         queue.enqueueAction(userId, async () => {
-          if (consumers[userId]) return;
+          console.log('start subscribe', userId);
+
+          if (consumers[userId]) {
+            console.log('bailing on subscribe', userId)
+            return;
+          }
 
           let queueHandle = getQueueHandle(userId);
           await channel.assertQueue(queueHandle);
@@ -80,6 +86,7 @@ let createMessageClient = async function () {
           await channel.bindQueue(queueHandle, exchange, getComposeBinding(userId));
           let consumer = await channel.consume(queueHandle, handleMessage);
           consumers[userId] = consumer.consumerTag;
+          console.log('finish subscribe', userId)
           resolve();
         })
       });
@@ -87,13 +94,18 @@ let createMessageClient = async function () {
 
     unsubscribeFromUserMessages: function (userId) {
       return new Promise((resolve, reject) => {
+        console.log('enqueue unsubscribe', userId)
         queue.enqueueAction(userId, async () => {
-          if (!consumers[userId]) return;
-
+          console.log('start unsubscribe', userId);
+          if (!consumers[userId]) {
+            console.log('bailing on unsubscribe', userId)
+            return;
+          }
           let queueHandle = getQueueHandle(userId);
           await channel.unbindQueue(queueHandle, exchange, getComposeBinding(userId));
           await channel.cancel(consumers[userId]);
           consumers[userId] = null;
+          console.log('finish unsubscribe', userId)
           resolve();
         });
       });

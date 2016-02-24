@@ -171,12 +171,14 @@ describe('messaging', function () {
   it('Passes pending messages when client connects', function (done) {
     var firstClient = clientForUser(0).on('connect', function () {
       firstClient.emit('messagedata', createMessage(0, 1), cb);
-      firstClient.emit('messagedata', createMessage(0, 1), cb);
-      firstClient.emit('messagedata', createMessage(0, 1), cb);
+
+      setTimeout(function () {
+        firstClient.emit('messagedata', createMessage(0, 1), cb);
+      }, 1000)
     });
 
-    var cb = runOnAttempt(3, function () {
-      var doneCb = runOnAttempt(3, done);
+    var cb = runOnAttempt(2, function () {
+      var doneCb = runOnAttempt(2, done);
 
       clientForUser(1).on('messagedata', function (data, ack) {
         doneCb();

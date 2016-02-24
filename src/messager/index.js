@@ -9,6 +9,7 @@ import wrap from '../lib/wrapSocketMiddleware';
 import authenticate from '../lib/authenticateSocket';
 import { processChatMessageData, logChatMessage } from '../lib/MessageUtils';
 import createMessageClient from '../lib/createMessageClient';
+import rateLimitSocketHandler from '../lib/rateLimitSocketHandler';
 import { ap, partial, always, set , _, lensProp, merge } from 'ramda';
 
 let makeArray = o => o instanceof Array ? o : [o];
@@ -91,7 +92,7 @@ let createMessageApp = async function () {
 
   let handleConnection = async function (socket, next) {
     let userId = socket.user.id;
-    socket.on('messagedata', partial(handleChat, socket.user));
+    socket.on('messagedata', rateLimitSocketHandler(socket, partial(handleChat, socket.user)));
     socket.on('composeevent', partial(handleCompose, userId));
     socket.on('disconnect', partial(removeUserSocket, userId));
     await addUserSocket(userId, socket);
