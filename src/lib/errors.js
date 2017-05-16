@@ -1,23 +1,35 @@
 class BaseError extends Error {
   constructor(message) {
-    super(arguments);
+    super(...arguments);
     this.message = message;
     this.stack = (new Error()).stack;
   }
 }
 
 export class RequestError extends BaseError {
-  get status () { return 400; }
+  constructor() {
+    super(...arguments);
+    this.status = 400;
+  }
 }
 
 export class PermissionsError extends BaseError {
-  get status () { return 403; }
+  constructor() {
+    super(...arguments);
+    this.status = 403;
+  }
 }
 
 export class NotFoundError extends BaseError {
-  get status () { return 404; }
+  constructor() {
+    super(...arguments);
+    this.status = 404;
+  }
 }
 
 export class ServerError extends BaseError {
-  get status () { return 500; }
+  constructor() {
+    super(...arguments);
+    this.status = 500;
+  }
 }

@@ -25,7 +25,8 @@ app.use('/account', accountApp);
 app.use(function (err, req, res, next) {
   if (err instanceof ev.ValidationError) {
     let message = err.errors.map(e => e.messages.join("\n")).join("\n");
-    next(new RequestError(message));
+    let error = new RequestError(message)
+    next(error);
   } else {
     next(err);
   }

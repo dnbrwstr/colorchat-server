@@ -12,9 +12,21 @@
   },
   "author": "Daniel Brewster",
   "license": "MIT",
+  "babel": {
+    "presets": [
+      "env"
+    ],
+    "plugins": [
+      "transform-object-rest-spread"
+    ]
+  },
   "dependencies": {
     "amqplib": "^0.4.0",
-    "babel": "^5.8.21",
+    "babel": "^6.23.0",
+    "babel-plugin-transform-object-rest-spread": "^6.23.0",
+    "babel-polyfill": "^6.23.0",
+    "babel-preset-env": "^1.4.0",
+    "babel-register": "^6.24.1",
     "bluebird": "^2.9.34",
     "body-parser": "^1.13.3",
     "chalk": "^1.1.1",

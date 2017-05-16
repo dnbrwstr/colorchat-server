@@ -7,11 +7,11 @@ var sinon = require('sinon'),
   expect = require('chai').expect,
   request = require('supertest-as-promised'),
   Promise = require('bluebird'),
-  db = require('../src/lib/db'),
-  User = require('../src/models/User'),
-  createServer = require('../src/lib/createServer'),
   amqp = require('amqplib'),
-  exec = require('child_process').exec;
+  exec = require('child_process').exec,
+  db = require('../src/lib/db').default,
+  User = require('../src/models/User').default,
+  createServer = require('../src/lib/createServer').default;
 
 var testUserData = [{
   number: '+14013911814',

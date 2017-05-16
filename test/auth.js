@@ -5,11 +5,11 @@ var sinon = require('sinon'),
   expect = require('chai').expect,
   request = require('supertest-as-promised'),
   Promise = require('bluebird'),
-  app = require('../src/api'),
-  db = require('../src/lib/db'),
-  ConfirmationCode = require('../src/models/ConfirmationCode'),
-  User = require('../src/models/User'),
-  twilio = require('../src/lib/twilio'),
+  app = require('../src/api').default,
+  db = require('../src/lib/db').default,
+  ConfirmationCode = require('../src/models/ConfirmationCode').default,
+  User = require('../src/models/User').default,
+  twilio = require('../src/lib/twilio').default,
   mapTimes = require('../src/lib/FnUtils').mapTimes;
 
 var defaultNumberData = {

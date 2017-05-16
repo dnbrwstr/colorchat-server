@@ -5,9 +5,9 @@ var sinon = require('sinon'),
   expect = require('chai').expect,
   request = require('supertest-as-promised'),
   Promise = require('bluebird'),
-  app = require('../src/api'),
-  db = require('../src/lib/db'),
-  User = require('../src/models/User');
+  app = require('../src/api').default,
+  db = require('../src/lib/db').default,
+  User = require('../src/models/User').default;
 
 var authToken = 'abc';
 
