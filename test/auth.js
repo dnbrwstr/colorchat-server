@@ -1,9 +1,8 @@
 require('./helpers/configure');
 
 var sinon = require('sinon'),
-  sinonAsPromised = require('sinon-as-promised'),
   expect = require('chai').expect,
-  request = require('supertest-as-promised'),
+  request = require('supertest'),
   Promise = require('bluebird'),
   app = require('../src/api').default,
   db = require('../src/lib/db').default,
@@ -98,8 +97,7 @@ describe('auth', function () {
         });
       }).then(function () {
         return agent.post('/auth')
-          .send(defaultNumberData)
-          .toPromise();
+          .send(defaultNumberData);
       }).then(function (res) {
         expect(res.status).to.equal(403);
         done();

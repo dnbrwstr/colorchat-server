@@ -3,9 +3,8 @@ require('./helpers/configure');
 var sinon = require('sinon'),
   R = require('ramda'),
   io = require('socket.io-client'),
-  sinonAsPromised = require('sinon-as-promised'),
   expect = require('chai').expect,
-  request = require('supertest-as-promised'),
+  request = require('supertest'),
   Promise = require('bluebird'),
   amqp = require('amqplib'),
   exec = require('child_process').exec,
@@ -77,9 +76,9 @@ describe('messaging', function () {
     return amqp.connect().then(function (connection) {
       return connection.createChannel().then(function (channel) {
         return channel.assertQueue('user-1')
-          .then(channel.assertQueue('user-2'))
-          .then(channel.purgeQueue('user-1'))
-          .then(channel.purgeQueue('user-2'))
+          .then(function () { return channel.assertQueue('user-2'); })
+          .then(function () { return channel.purgeQueue('user-1'); })
+          .then(function () { return channel.purgeQueue('user-2'); })
         });
     });
   };

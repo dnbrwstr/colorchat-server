@@ -92,9 +92,9 @@ let createMessageApp = async function () {
 
   let handleConnection = async function (socket, next) {
     let userId = socket.user.id;
-    socket.on('messagedata', rateLimitSocketHandler(socket, partial(handleChat, socket.user)));
-    socket.on('composeevent', partial(handleCompose, userId));
-    socket.on('disconnect', partial(removeUserSocket, userId));
+    socket.on('messagedata', rateLimitSocketHandler(socket, partial(handleChat, [socket.user])));
+    socket.on('composeevent', partial(handleCompose, [userId]));
+    socket.on('disconnect', partial(removeUserSocket, [userId]));
     await addUserSocket(userId, socket);
     socket.emit('ready');
   };

@@ -2,7 +2,7 @@ import Color from 'color';
 import colorData from './colorData';
 
 export default function (hexColor)  {
-  let rgbColor = Color(hexColor).rgbArray();
+  let rgbColor = Color(hexColor).rgb().array();
   let index;
   let dist;
 
