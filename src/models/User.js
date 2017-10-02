@@ -2,6 +2,7 @@ import Sequelize from 'sequelize';
 import crypto from 'crypto';
 import { pick } from 'ramda';
 import db from '../lib/db';
+import DeviceToken from './DeviceToken';
 
 let User = db.define('User', {
   name: {
@@ -20,6 +21,11 @@ let User = db.define('User', {
   deviceTokens: {
     type: Sequelize.ARRAY(Sequelize.STRING),
     defaultValue: []
+  },
+  unreadCount: {
+    type: Sequelize.INTEGER,
+    required: true,
+    default: 0
   }
 }, {
   classMethods: {
@@ -62,10 +68,24 @@ let User = db.define('User', {
     }
   },
   instanceMethods: {
+    addDeviceToken: async function (token, platform) {
+      let type;
+
+      const existingToken = await DeviceToken.find({ where: { token } });
+      if (existingToken) return;
+
+      return DeviceToken.create({
+        token,
+        platform,
+        UserId: this.id
+      });
+    },
     serialize: function () {
       return pick(['id', 'name', 'phoneNumber'], this.get());
     }
   }
 });
+
+User.hasMany(DeviceToken, { as: 'pushTokens' });
 
 export default User;

@@ -1,7 +1,15 @@
 import fetch from 'node-fetch';
+import * as admin from 'firebase-admin';
 import getClosestColor from './getClosestColor';
 import logError from './logError';
 import User from '../models/User';
+import DeviceToken from '../models/DeviceToken';
+import serviceAccount from '../../firebaseServiceAccount.json';
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: process.env.FIREBASE_DB_URL
+});
 
 export let getText = async function (message) {
   let user = await User.findById(message.senderId);
@@ -27,44 +35,44 @@ export let getText = async function (message) {
     color,
     shape
   ].filter(i => !!i).join(' ');
-}
+};
 
 export let sendChatMessageNotification = async function (message) {
   let user = await User.findById(message.recipientId);
+  let newUnreadCount = user.unreadCount + 1;
+  let tokens = await DeviceToken.findAll({ UserId: user.id }).then(tokens => tokens.map(t => t.token));
   let text = await getText(message);
-  let url = "https://api.parse.com/1/push";
 
-  let data = JSON.stringify({
-    where: {
-      deviceType: "ios",
-      deviceToken: {
-        $in: user.deviceTokens
-      }
+  let payload = {
+    notification: {
+      title: text,
+      badge: newUnreadCount.toString(),
+      sound: 'cheering.caf',
+      color: message.color,
     },
     data: {
-      alert: text,
-      badge: 'Increment',
-      sound: 'cheering.caf',
       type: 'message',
-      'content-available': '1',
-      messageId: message.id,
-      senderId: message.senderId,
-      message
+      message: JSON.stringify(message)
     }
-  });
+  };
 
-  let res = await fetch(url, {
-    method: 'post',
-    headers: {
-      'X-Parse-Application-Id': process.env.PARSE_APPLICATION_ID,
-      'X-Parse-REST-API-Key': process.env.PARSE_REST_API_KEY,
-      'Content-Type': 'application/json'
-    },
-    body: data
-  });
+  let options = {
+    contentAvailable: true
+  };
 
-  if (res.status !== 200) {
-    let text = await res.text();
-    logError(text);
+  try {
+    let result = await admin.messaging().sendToDevice(tokens, payload, options); 
+    let allResults = result.results;
+    allResults.forEach(r => r.error && logError(r.error));
+  } catch (error) {
+    logError(error);
+  }
+
+  try {
+    await user.update({
+      unreadCount: newUnreadCount
+    });
+  } catch (error) {
+    logError(error);
   }
 };

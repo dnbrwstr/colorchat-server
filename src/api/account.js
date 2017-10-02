@@ -10,7 +10,8 @@ let app = express();
 let rootValidator = {
   body: {
     deviceToken: Joi.string(),
-    name: Joi.string()
+    name: Joi.string(),
+    unreadCount: Joi.number()
   }
 };
 
@@ -22,7 +23,7 @@ app.put('/', authenticate, validate(rootValidator), wrap(async function (req, re
   let data = {};
 
   if (req.body.deviceToken) {
-    data.deviceTokens = uniq(req.user.deviceTokens.concat(req.body.deviceToken));
+    await req.user.addDeviceToken(req.body.deviceToken, req.body.platform);
   }
 
   if (req.body.name) {
