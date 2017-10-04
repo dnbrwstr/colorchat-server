@@ -49,6 +49,7 @@ export let sendChatMessageNotification = async function (message) {
       badge: newUnreadCount.toString(),
       sound: 'cheering.caf',
       color: message.color,
+      icon: 'ic_notification'
     },
     data: {
       type: 'message',
