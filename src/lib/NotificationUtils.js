@@ -40,8 +40,11 @@ export let getText = async function (message) {
 export let sendChatMessageNotification = async function (message) {
   let user = await User.findById(message.recipientId);
   let newUnreadCount = user.unreadCount + 1;
-  let tokens = await DeviceToken.findAll({ UserId: user.id }).then(tokens => tokens.map(t => t.token));
   let text = await getText(message);
+  
+  let tokens = await DeviceToken
+    .findAll({ where: { UserId: user.id }})
+    .then(tokens => tokens.map(t => t.token));
 
   let payload = {
     notification: {
