@@ -4,3 +4,4 @@ node_modules
 .env.test
 .env.docker
 firebaseServiceAccount.json
+.vscode
