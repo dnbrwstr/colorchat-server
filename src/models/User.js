@@ -69,6 +69,10 @@ let User = db.define('User', {
   },
   instanceMethods: {
     addDeviceToken: async function (token, platform) {
+      // Devices with an old version of ColorChat
+      // won't set platform in request
+      if (!platform) platform = 'ios';
+
       let type;
 
       const existingToken = await DeviceToken.find({ where: { token } });

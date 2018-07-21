@@ -6,7 +6,8 @@ var sinon = require('sinon'),
   Promise = require('bluebird'),
   app = require('../src/api').default,
   db = require('../src/lib/db').default,
-  User = require('../src/models/User').default;
+  User = require('../src/models/User').default,
+  DeviceToken = require('../src/models/DeviceToken').default;
 
 var authToken = 'abc';
 
@@ -56,9 +57,9 @@ describe('account', function () {
       .end(function (err, res) {
         if (err) throw err;
 
-        user.reload().then(function (user) {
-          expect(user.deviceTokens.length).to.equal(1);
-          expect(user.deviceTokens[0]).to.equal('456');
+        user.reload({ include: [{model: DeviceToken, as: 'pushTokens' }] }).then(function (user) {
+          expect(user.pushTokens.length).to.equal(1);
+          expect(user.pushTokens[0].token).to.equal('456');
           done();
         });
       })
