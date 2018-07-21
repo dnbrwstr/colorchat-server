@@ -1,0 +1,37 @@
+version: 2
+jobs:
+  build: 
+    docker: 
+      - image: circleci/node:10-browsers
+      - image: circleci/postgres:9.4.12-alpine
+        environment:
+          POSTGRES_USER: postgres
+          POSTGRES_DB: colorchat-server-test
+      - image: rabbitmq:3.5.6-management
+    environment:
+      DEFAULT_REGION: US
+      DATABASE_URL: postgres://postgres@127.0.0.1:5432/colorchat-server-test
+      PORT: 3001
+    steps:
+      - checkout
+      - run: "npm install"
+      - run: "npm test"
+      - setup_remote_docker
+      - run: "docker build -t dnbrwstr/colorchat-server ."
+      - run: |
+          docker login -u $DOCKER_USER -p $DOCKER_PASS
+          docker push dnbrwstr/colorchat-server
+  deploy:
+    machine:
+      enabled: true
+    steps:
+      - run: "ssh -p $SSH_PORT core@colorchat-server.color.slow.so 'sudo systemctl restart colorchat'"
+
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build
+      - deploy:
+          requires:
+            - build
