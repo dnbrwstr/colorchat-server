@@ -4,12 +4,15 @@ import getClosestColor from './getClosestColor';
 import logError from './logError';
 import User from '../models/User';
 import DeviceToken from '../models/DeviceToken';
-import serviceAccount from '../../firebaseServiceAccount.json';
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: process.env.FIREBASE_DB_URL
-});
+if (process.env.FIREBASE_SERVICE_ACCOUNT_FILE) {
+  const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_FILE);
+
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: process.env.FIREBASE_DB_URL
+  });
+}
 
 export let getText = async function (message) {
   let user = await User.findById(message.senderId);
