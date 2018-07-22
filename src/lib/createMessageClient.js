@@ -37,8 +37,6 @@ let createMessageClient = async function () {
       channel.nack(message);
     });
 
-    console.log('sending message thru', message);
-
     messageCallbacks.forEach(function (cb) {
       cb(messageData, ack, nack);
     });
