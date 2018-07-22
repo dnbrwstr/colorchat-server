@@ -5,9 +5,12 @@ import logError from './logError';
 import User from '../models/User';
 import DeviceToken from '../models/DeviceToken';
 
-if (process.env.FIREBASE_SERVICE_ACCOUNT_FILE) {
-  const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_FILE);
+const notificationsEnabled = 
+  process.env.NOTIFICATIONS_ENABLED === "1" &&
+  process.env.FIREBASE_SERVICE_ACCOUNT_FILE;
 
+if (notificationsEnabled) {
+  const serviceAccount = require(process.env.FIREBASE_SERVICE_ACCOUNT_FILE);
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: process.env.FIREBASE_DB_URL
@@ -41,6 +44,8 @@ export let getText = async function (message) {
 };
 
 export let sendChatMessageNotification = async function (message) {
+  if (!notificationsEnabled) return;
+  
   let user = await User.findById(message.recipientId);
   let newUnreadCount = user.unreadCount + 1;
   let text = await getText(message);
