@@ -32,8 +32,15 @@ let createMessageClient = async function () {
       channel.ack(message);
     });
 
+    let nack = once(() => {
+      clearTimeout(requeueTimeout);
+      channel.nack(message);
+    });
+
+    console.log('sending message thru', message);
+
     messageCallbacks.forEach(function (cb) {
-      cb(messageData, ack);
+      cb(messageData, ack, nack);
     });
   }
 

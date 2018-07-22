@@ -78,14 +78,15 @@ let createMessageApp = async function () {
 
   // Handle messages from queue
 
-  let handleReceiveMessage = function (message, ack) {
+  let handleReceiveMessage = function (message, ack, nack) {
     let socket = userSockets[message.content.recipientId];
 
-    if (!socket) {
-      throw new ServerError('Trying to deliver message on a nonexistent socket for user ' + message.content.recipientId);
+    if (socket) {
+      socket.emit(message.type, message.content, ack);
+    } else {
+      console.log('No user socket to receive message, requeuing');
+      nack(message);
     }
-
-    socket.emit(message.type, message.content, ack);
   };
 
   // Application setup
