@@ -88,7 +88,7 @@ let createMessageApp = async function () {
     if (socket) {
       socket.emit(message.type, message.content, ack);
     } else {
-      console.log('No user socket to receive message, requeuing');
+      console.log(`Socket delivery failed. User: ${message.content.recipientId}, Message: ${message.content.id}. Requeuing...`);
       nack(message);
     }
   };
