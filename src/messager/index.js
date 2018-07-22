@@ -38,6 +38,10 @@ let createMessageApp = async function () {
   };
 
   let removeUserSocket = function (userId) {
+    // Since user can no longer receive messages at the point
+    // this is called, we don't wait for the unsubscribe to complete
+    // before deleting their mailbox. Anything that arrives during
+    // unsubscribe will get nack'd.
     messageClient.unsubscribeFromUserMessages(userId);
     delete userSockets[userId];
   };

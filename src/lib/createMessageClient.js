@@ -107,8 +107,10 @@ let createMessageClient = async function () {
             return;
           }
           let queueHandle = getQueueHandle(userId);
-          await channel.unbindQueue(queueHandle, exchange, getComposeBinding(userId));
           await channel.cancel(consumers[userId]);
+          // Compose events are only relevant to the user while
+          // they're active in app.
+          await channel.unbindQueue(queueHandle, exchange, getComposeBinding(userId));
           consumers[userId] = null;
           console.log('finish unsubscribe', userId)
           resolve();
