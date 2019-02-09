@@ -86,6 +86,6 @@ ConfirmationCode.attemptValidationWhere = async function(data) {
 };
 
 ConfirmationCode.findWithNumber = phoneNumber =>
-  ConfirmationCode.find({ where: { phoneNumber } });
+  ConfirmationCode.findOne({ where: { phoneNumber } });
 
 export default ConfirmationCode;

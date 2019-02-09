@@ -33,7 +33,7 @@ User.createOrUpdateFromConfirmation = async confirmation => {
   let tokenBuffer = await crypto.randomBytesAsync(64);
   let token = tokenBuffer.toString("hex");
 
-  let user = await User.find({
+  let user = await User.findOne({
     where: { phoneNumber: confirmation.phoneNumber }
   });
 
@@ -64,7 +64,7 @@ User.wherePhoneNumberIn = async numbers => {
 };
 
 User.findByToken = async token => {
-  let user = await User.find({
+  let user = await User.findOne({
     where: {
       tokens: { $contains: [token] }
     }
@@ -78,7 +78,7 @@ User.prototype.addDeviceToken = async function(token, platform) {
   // won't set platform in request
   if (!platform) platform = "ios";
 
-  const existingToken = await DeviceToken.find({ where: { token } });
+  const existingToken = await DeviceToken.findOne({ where: { token } });
   if (existingToken) return;
 
   return DeviceToken.create({
