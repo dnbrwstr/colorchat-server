@@ -73,17 +73,15 @@ User.findByToken = async token => {
   return user;
 };
 
-User.prototype.addDeviceToken = async function(token, platform) {
+User.prototype.addDeviceToken = async function({token, platform, deviceId}) {
   // Devices with an old version of ColorChat
   // won't set platform in request
   if (!platform) platform = "ios";
 
-  const existingToken = await DeviceToken.findOne({ where: { token } });
-  if (existingToken) return;
-
-  return DeviceToken.create({
-    token,
+  return DeviceToken.upsert({
     platform,
+    token,
+    deviceId,
     UserId: this.id
   });
 };

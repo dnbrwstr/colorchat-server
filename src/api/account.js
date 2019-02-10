@@ -23,7 +23,11 @@ app.put('/', authenticate, validate(rootValidator), wrap(async function (req, re
   let data = {};
 
   if (req.body.deviceToken) {
-    await req.user.addDeviceToken(req.body.deviceToken, req.body.platform);
+    await req.user.addDeviceToken({
+      token: req.body.deviceToken,
+      platform: req.body.platform,
+      deviceId: req.body.deviceId
+    });
   }
 
   if (req.body.name) {

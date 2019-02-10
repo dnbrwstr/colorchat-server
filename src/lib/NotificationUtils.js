@@ -51,34 +51,42 @@ export let sendChatMessageNotification = async function (message) {
   let text = await getText(message);
   
   let tokens = await DeviceToken
-    .findAll({ where: { UserId: user.id }})
-    .then(tokens => tokens.map(t => t.token));
+    .findAll({ where: { UserId: user.id }});
 
-  let payload = {
-    notification: {
-      title: text,
-      badge: newUnreadCount.toString(),
-      sound: 'cheering.caf',
-      color: message.color,
-      icon: 'ic_notification'
-    },
-    data: {
-      type: 'message',
-      message: JSON.stringify(message)
+  const tokenPromises = tokens.map(async t => {
+    let payload = {
+      notification: {
+        badge: newUnreadCount.toString(),
+        sound: 'cheering.caf',
+        color: message.color,
+        icon: 'ic_notification'
+      },
+      data: {
+        type: 'message',
+        message: JSON.stringify(message)
+      }
+    };
+
+    let options = {
+      contentAvailable: true
+    };  
+
+    if (t.platform === 'ios') {
+      payload.notification.body = text;
+    } else {
+      payload.notification.text = text;
     }
-  };
 
-  let options = {
-    contentAvailable: true
-  };
+    try {
+      let result = await admin.messaging().sendToDevice(t.token, payload, options); 
+      let allResults = result.results;
+      allResults.forEach(r => r.error && logError(r.error));
+    } catch (error) {
+      logError(error);
+    }
+  });
 
-  try {
-    let result = await admin.messaging().sendToDevice(tokens, payload, options); 
-    let allResults = result.results;
-    allResults.forEach(r => r.error && logError(r.error));
-  } catch (error) {
-    logError(error);
-  }
+  await Promise.all(tokenPromises);
 
   try {
     await user.update({
