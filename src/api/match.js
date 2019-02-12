@@ -30,7 +30,8 @@ app.post('/', [authenticate], wrapAsyncRoute(async (req, res, next) => {
 
   let results = matches.map(m => ({
     index: numberMap[m.phoneNumber],
-    userId: m.id
+    userId: m.id,
+    avatar: m.avatar
   }));
 
   res.json(results);
