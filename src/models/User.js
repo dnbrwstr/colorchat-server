@@ -9,6 +9,10 @@ let User = db.define("User", {
     type: Sequelize.STRING,
     require: false
   },
+  avatar: {
+    type: Sequelize.STRING,
+    require: false
+  },
   phoneNumber: {
     type: Sequelize.STRING,
     required: true,

@@ -34,6 +34,10 @@ app.put('/', authenticate, validate(rootValidator), wrap(async function (req, re
     data.name = req.body.name;
   }
 
+  if (req.body.avatar) {
+    data.avatar = req.body.avatar;
+  }
+
   await req.user.update(data);
   res.send(req.user.serialize());
 }));
