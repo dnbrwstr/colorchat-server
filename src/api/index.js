@@ -6,6 +6,7 @@ import morgan from 'morgan';
 import authApp from './auth';
 import matchApp from './match';
 import accountApp from './account';
+import userApp from './user';
 import logError from '../lib/logError';
 import { RequestError } from '../lib/errors';
 
@@ -21,6 +22,7 @@ app.use(bodyParser.json());
 app.use('/auth', authApp);
 app.use('/match', matchApp);
 app.use('/account', accountApp);
+app.use('/user', userApp);
 
 app.use(function (err, req, res, next) {
   if (err instanceof ev.ValidationError) {
