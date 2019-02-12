@@ -91,7 +91,7 @@ User.prototype.addDeviceToken = async function({token, platform, deviceId}) {
 };
 
 User.prototype.serialize = function() {
-  return pick(["id", "name", "phoneNumber"], this.get());
+  return pick(["id", "name", "phoneNumber", "avatar"], this.get());
 };
 
 User.hasMany(DeviceToken, { as: "pushTokens" });
