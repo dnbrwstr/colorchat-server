@@ -34,14 +34,16 @@ describe('account', function () {
   });
 
   it('Returns user avatar', function (done) {
-    agent.get('/user/' + phoneNumber + '/avatar')
+    agent.get('/user/401-444-4444/avatar')
       .set(authHeaders)
       .expect(200)
       .end(function (err, res) {
         if (err) throw err;
         var user = res.body;
         expect(user).to.have.keys(['avatar']);
+        expect(user.avatar).to.equal('#EFEFEF')
         done();
       })
   })
+
 });

@@ -7,7 +7,7 @@ import { normalize } from '../lib/PhoneNumberUtils';
 let app = express();
 
 app.get('/:number/avatar', authenticate, wrap(async function (req, res, next) {
-  const number = req.params.number;
+  const number = normalize(req.params.number, req.user.phoneNumber);
   const user = await User.findOne({ where: {
     phoneNumber: number
   } });
