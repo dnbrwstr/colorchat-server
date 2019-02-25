@@ -10,8 +10,11 @@ let app = express();
 let rootValidator = {
   body: {
     deviceToken: Joi.string(),
+    platform: Joi.string(),
+    deviceId: Joi.string(),
     name: Joi.string(),
-    unreadCount: Joi.number()
+    unreadCount: Joi.number(),
+    avatar: Joi.string()
   }
 };
 
@@ -20,8 +23,6 @@ app.get('/', authenticate, wrap(async function (req, res, next) {
 }));
 
 app.put('/', authenticate, validate(rootValidator), wrap(async function (req, res, next) {
-  let data = {};
-
   if (req.body.deviceToken) {
     await req.user.addDeviceToken({
       token: req.body.deviceToken,
@@ -30,12 +31,18 @@ app.put('/', authenticate, validate(rootValidator), wrap(async function (req, re
     });
   }
 
+  let data = {};
+
   if (req.body.name) {
     data.name = req.body.name;
   }
 
   if (req.body.avatar) {
     data.avatar = req.body.avatar;
+  }
+
+  if (typeof req.body.unreadCount !== "undefined") {
+    data.unreadCount = req.body.unreadCount;
   }
 
   await req.user.update(data);
