@@ -8,7 +8,7 @@
   },
   "scripts": {
     "test": "mocha test --exit",
-    "start": "node src/init",
+    "start": "node src/index",
     "sequel": "npx sequelize --config sequelize.js --migrations-path gulp/migrations --models-path src/models",
     "start-docker": "docker build -t dnbrwstr/colorchat-server .; docker run --env-file=\".env.docker\" -v /Users/danielbrewster/projects/chat-server/firebaseServiceAccount.json:/var/www/firebaseServiceAccount.json -p 127.0.0.1:3000:3000 dnbrwstr/colorchat-server"
   },

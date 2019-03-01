@@ -1,13 +1,14 @@
-// This file should remain vanilla JS as only
-// files required after babel are transpiled
-require('dotenv').load();
-require('babel-register');
-require('babel-polyfill');
-require('./lib/promisify');
+import db from './lib/db';
+import createServer from './lib/createServer';
+import logError from './lib/logError';
 
-var db = require('./lib/db').default,
-  createServer = require('./lib/createServer').default;
-
-db.sync().then(function () {
-  createServer(process.env.PORT);
-});
+(async () => {
+  try {
+    await db.sync();
+    await createServer(process.env.PORT);
+  } catch (e) {
+    console.log('Unable to start Color Chat');
+    logError(e);
+    process.exit();
+  }
+})();

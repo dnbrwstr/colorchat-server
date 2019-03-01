@@ -13,12 +13,4 @@ let createServer = async (port=3000) => {
   return server;
 };
 
-let wrappedCreateServer = async (port) => {
-  try {
-    await createServer(port);
-  } catch(error) {
-    logError(error);
-  }
-}
-
-export default wrappedCreateServer;
+export default createServer;
