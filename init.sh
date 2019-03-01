@@ -11,4 +11,4 @@
 #   echo "No secrets folder found, trying to run anyway"
 # fi
 
-npm start
+exec npm start
