@@ -98,7 +98,9 @@ let createMessageApp = async function () {
   messageClient = await createMessageClient();
   messageClient.onMessage(handleReceiveMessage);
 
-  let app = io();
+  let app = io({
+    maxHttpBufferSize: 10000
+  });
   app.use(handleError);
   app.use(wrap(authenticate));
   app.on('connection', wrap(handleConnection));
