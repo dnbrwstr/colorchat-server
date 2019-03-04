@@ -3,7 +3,7 @@ import logError from '../lib/logError';
 import { sendChatMessageNotification } from '../lib/NotificationUtils';
 import wrap from '../lib/wrapSocketMiddleware';
 import authenticate from '../lib/authenticateSocket';
-import { processChatMessageData, logChatMessage } from '../lib/MessageUtils';
+import { processChatMessageData, logChatMessage, processComposeMessageData } from '../lib/MessageUtils';
 import createMessageClient from '../lib/createMessageClient';
 import rateLimitSocketHandler from '../lib/rateLimitSocketHandler';
 import { ap, partial, always, set , _, lensProp, merge } from 'ramda';
@@ -38,10 +38,12 @@ let createMessageApp = async function () {
   // Handle messages from socket
 
   let handleCompose = function (userId, data, cb) {
+    const composeEvent = processComposeMessageData(data);
+
     sendMessage(
       'composeevent',
       data.recipientId,
-      merge(data, { senderId: userId }),
+      merge(composeEvent, { senderId: userId }),
       { expiration: 500 , persistent: false }
     );
     cb && cb(data);

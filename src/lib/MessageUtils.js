@@ -2,8 +2,8 @@ import { merge, pick } from 'ramda';
 import chalk from 'chalk';
 import uuid from 'uuid';
 
-export let processChatMessageData = messageData => {
-  let allowedKeys = [
+export const processChatMessageData = messageData => {
+  const allowedKeys = [
     'id',
     'senderId',
     'recipientId',
@@ -19,7 +19,15 @@ export let processChatMessageData = messageData => {
   }));
 };
 
-export let logChatMessage = message => {
-  let { senderId, recipientId } = message;
+export const processComposeMessageData = messageData => {
+  const allowedKeys = [
+    'recipientId'
+  ];
+
+  return pick(allowedKeys, messageData);
+};
+
+export const logChatMessage = message => {
+  const { senderId, recipientId } = message;
   console.log(chalk.blue('Message:', senderId, '=>', recipientId));
-}
+};
