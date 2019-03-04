@@ -11,6 +11,7 @@ import logError from '../lib/logError';
 import { RequestError } from '../lib/errors';
 
 let app = express();
+app.disable('x-powered-by')
 
 if (process.env.NODE_ENV === 'development') {
   app.use(cors());
