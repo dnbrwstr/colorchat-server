@@ -1,11 +1,10 @@
 import amqp from 'amqplib';
-import { once, partial, merge } from 'ramda';
+import { once, merge } from 'ramda';
 import UserActionQueue from './UserActionQueue';
 
 const REQUEUE_TIMEOUT = 5000;
 
 let createMessageClient = async function () {
-  let id = Math.random();
   let messageCallbacks = [];
   let consumers = {};
   let exchange = 'colorchat';

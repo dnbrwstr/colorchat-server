@@ -1,8 +1,4 @@
-import uuid from 'uuid';
-import chalk from 'chalk';
 import io from 'socket.io';
-import { ServerError } from '../lib/errors';
-import User from '../models/User';
 import logError from '../lib/logError';
 import { sendChatMessageNotification } from '../lib/NotificationUtils';
 import wrap from '../lib/wrapSocketMiddleware';
@@ -17,13 +13,6 @@ let makeArray = o => o instanceof Array ? o : [o];
 let handleError = function (socket, next) {
   socket.on('error', logError);
   next();
-};
-
-let processMessages = (messageData, userId) => {
-  return messageData.map(m => {
-    m.senderId = userId;
-    return processMessageData(m);
-  });
 };
 
 let createMessageApp = async function () {
