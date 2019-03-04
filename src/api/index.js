@@ -39,4 +39,8 @@ app.use(function (err, req, res, next) {
   res.status(err.status || 500).send(err.message || 'Something bad happened');
 });
 
+app.use(function (req, res, next) {
+  res.status(404).send("Hi :^)<br><br>There's nothing here :^(");
+});
+
 export default app;
