@@ -1,6 +1,8 @@
 import amqp from 'amqplib';
 import { once, merge } from 'ramda';
 import UserActionQueue from './UserActionQueue';
+import chalk from 'chalk';
+import { getMessageString } from './MessageUtils';
 
 const REQUEUE_TIMEOUT = 5000;
 
@@ -22,19 +24,19 @@ let createMessageClient = async function () {
   function handleMessage (message) {
     let messageData = decodeMessage(message);
 
-    let requeueTimeout = setTimeout(() => {
+    const respond = once(responder => responder());
+    
+    const nack = () => respond(() => {
+      console.log(chalk.red('NACK', getMessageString(messageData.content)));
       channel.nack(message);
-    }, REQUEUE_TIMEOUT);
+    });
 
-    let ack = once(() => {
-      clearTimeout(requeueTimeout);
+    const ack = () => respond(() => {
+      console.log(chalk.green('ACK', getMessageString(messageData.content)));
       channel.ack(message);
     });
 
-    let nack = once(() => {
-      clearTimeout(requeueTimeout);
-      channel.nack(message);
-    });
+    setTimeout(nack, REQUEUE_TIMEOUT);
 
     messageCallbacks.forEach(function (cb) {
       cb(messageData, ack, nack);

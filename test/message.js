@@ -143,7 +143,8 @@ describe('messaging', function () {
         done(new Error('Second client should not receive own message'))
       });
 
-      firstClient.on('messagedata', function () {
+      firstClient.on('messagedata', function (data, cb) {
+        cb && cb();
         done();
       });
     });
@@ -160,14 +161,42 @@ describe('messaging', function () {
       client.emit('messagedata', messageData, function () {
         var partnerClient = clientForUser(1);
 
-        partnerClient.on('messagedata', function (data) {
+        partnerClient.on('messagedata', function (data, cb) {
+          cb && cb();
           done();
         });
       });
     });
   });
 
+  it("Requeues a message if not acked", function (done) {
+    this.timeout(10000);
+
+    var cb = runOnAttempt(2, function () {
+      secondClient.emit('messagedata', createMessage(1, 0));
+      secondClient.on('messagedata', function (data) {
+        done(new Error('Second client should not receive own message'))
+      });
+
+      firstClient.on('messagedata', function (data, cb) {
+        firstClient.close();
+      });
+
+      setTimeout(() => {
+        const newFirstClient = clientForUser(0);
+        newFirstClient.on('messagedata', (data, cb) => {
+          cb && cb();
+          done();
+        });
+      }, 6000);
+    });
+
+    var firstClient = clientForUser(0).on('ready', cb);
+    var secondClient = clientForUser(1).on('ready', cb);
+  })
+
   it('Passes pending messages when client connects', function (done) {
+    console.log("START PASS MESSAGE TESTR")
     this.timeout(5000);
 
     var firstClient = clientForUser(0).on('connect', function () {
@@ -182,6 +211,7 @@ describe('messaging', function () {
       var doneCb = runOnAttempt(2, done);
 
       clientForUser(1).on('messagedata', function (data, ack) {
+        ack && ack();
         doneCb();
       });
     });

@@ -28,6 +28,10 @@ export const processComposeMessageData = messageData => {
 };
 
 export const logChatMessage = message => {
+  console.log(chalk.blue('Message:', getMessageString(message)));
+};
+
+export const getMessageString = message => {
   const { senderId, recipientId } = message;
-  console.log(chalk.blue('Message:', senderId, '=>', recipientId));
+  return `${senderId} => ${recipientId}`;
 };
