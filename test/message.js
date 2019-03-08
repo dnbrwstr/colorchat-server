@@ -196,7 +196,6 @@ describe('messaging', function () {
   })
 
   it('Passes pending messages when client connects', function (done) {
-    console.log("START PASS MESSAGE TESTR")
     this.timeout(5000);
 
     var firstClient = clientForUser(0).on('connect', function () {

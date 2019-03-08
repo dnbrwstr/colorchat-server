@@ -1,6 +1,4 @@
-import fetch from 'node-fetch';
 import * as admin from 'firebase-admin';
-import getClosestColor from './getClosestColor';
 import logError from './logError';
 import User from '../models/User';
 import DeviceToken from '../models/DeviceToken';
@@ -20,7 +18,6 @@ if (notificationsEnabled) {
 export let getText = async function (message) {
   let user = await User.findById(message.senderId);
   let sizeDescriptor, shape;
-  let color = getClosestColor(message.color);
   let w = message.width;
   let h = message.height;
 
@@ -38,7 +35,7 @@ export let getText = async function (message) {
     user.name,
     'sent you a',
     sizeDescriptor && sizeDescriptor + ',',
-    color,
+    message.colorName,
     shape
   ].filter(i => !!i).join(' ');
 };
