@@ -12,7 +12,9 @@ export const processChatMessageData = messageData => {
     'createdAt',
     'width',
     'height',
-    'colorName'
+    'colorName',
+    'relativeWidth',
+    'relativeHeight'
   ];
 
   return pick(allowedKeys, merge(messageData, {
