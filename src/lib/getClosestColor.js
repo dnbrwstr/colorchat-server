@@ -1,4 +1,4 @@
-import { getColorName } from 'fast-color-lookup';
+import getColorName from 'fast-color-lookup';
 import Color from 'color';
 
 export default function (hexColor)  {
