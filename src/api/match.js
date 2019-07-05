@@ -26,12 +26,13 @@ let processNumbers = (numbers, baseNumber) => {
 
 app.post('/', [authenticate], wrapAsyncRoute(async (req, res, next) => {
   let { numbers, numberMap } = processNumbers(normalize(req.body.phoneNumbers, req.user.phoneNumber));
-  let matches = await User.wherePhoneNumberIn(numbers);
+  let  matches = await User.wherePhoneNumberIn(numbers);
 
   let results = matches.map(m => ({
     index: numberMap[m.phoneNumber],
     userId: m.id,
-    avatar: m.avatar
+    avatar: m.avatar,
+    blocked: req.user.blockedUsers.indexOf(m.id) !== -1
   }));
 
   res.json(results);

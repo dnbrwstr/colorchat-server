@@ -2,7 +2,7 @@ const LAST_HOUR_MAX = 1000;
 const LAST_MINUTE_MAX = 30;
 const LAST_SECOND_MAX = 1;
 
-let rateLimit = function (socket, fn) {
+let rateLimit = function (fn) {
   let lastHour = 0;
   let lastMinute = 0;
   let lastSecond = 0;

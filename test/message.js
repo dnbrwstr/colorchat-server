@@ -13,11 +13,15 @@ var sinon = require('sinon'),
   createServer = require('../src/lib/createServer').default;
 
 var testUserData = [{
-  number: '+14013911814',
+  phoneNumber: '+14013911814',
   tokens: ['123']
 }, {
-  number: '+14013911814',
+  phoneNumber: '+14013911815',
   tokens: ['456']
+}, {
+  phoneNumber: '+17777777777',
+  tokens: ['789'],
+  blockedUsers: [1]
 }];
 
 var baseSocketOptions = {
@@ -141,7 +145,7 @@ describe('messaging', function () {
       secondClient.emit('messagedata', createMessage(1, 0));
       secondClient.on('messagedata', function () {
         done(new Error('Second client should not receive own message'))
-      });
+      }); 
 
       firstClient.on('messagedata', function (data, cb) {
         cb && cb();
@@ -212,6 +216,21 @@ describe('messaging', function () {
       clientForUser(1).on('messagedata', function (data, ack) {
         ack && ack();
         doneCb();
+      });
+    });
+  });
+
+  it('Respects blocked numbers', function (done) {
+    this.timeout(5000);
+    var firstClient = clientForUser(0).on('ready', function () {
+      firstClient.emit('messagedata', createMessage(0, 2), function () {
+        setTimeout(done, 2000);
+      });
+    });
+
+    var secondClient = clientForUser(2).on('ready', function () {
+      secondClient.on('messagedata', function (m) {
+        done(new Error('Message from blocked user should not be delivered'))
       });
     });
   });

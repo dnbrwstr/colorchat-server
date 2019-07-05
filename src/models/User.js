@@ -1,6 +1,6 @@
 import Sequelize from "sequelize";
 import crypto from "crypto";
-import { pick } from "ramda";
+import { pick, uniq, without } from "ramda";
 import db from "../lib/db";
 import DeviceToken from "./DeviceToken";
 
@@ -30,6 +30,11 @@ let User = db.define("User", {
     type: Sequelize.INTEGER,
     required: true,
     default: 0
+  },
+  blockedUsers: {
+    type: Sequelize.ARRAY(Sequelize.INTEGER),
+    allowNull: false,
+    defaultValue: []
   }
 });
 
@@ -90,8 +95,33 @@ User.prototype.addDeviceToken = async function({token, platform, deviceId}) {
   });
 };
 
-User.prototype.serialize = function() {
-  return pick(["id", "name", "phoneNumber", "avatar"], this.get());
+User.prototype.serializePublic = function() {
+  return pick(["id", "name", "avatar"], this.get());
+};
+
+User.prototype.serializePrivate = function() {
+  return pick(["id", "name", "avatar", "phoneNumber"], this.get());
+}
+
+User.prototype.blockUser = function(userId) {
+  return this.update({
+    blockedUsers: uniq([...this.blockedUsers, userId])
+  });
+};
+
+User.prototype.unblockUser = function(userId) {
+  console.log('unblocking', userId);
+  return this.update({
+    blockedUsers: without([userId], this.blockedUsers)
+  });
+};
+
+User.prototype.getBlockedUsers = function() {
+  return User.findAll({
+    where: {
+      id: { $in: this.blockedUsers }
+    }
+  })
 };
 
 User.hasMany(DeviceToken, { as: "pushTokens" });

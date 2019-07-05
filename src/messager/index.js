@@ -1,109 +1,135 @@
-import io from 'socket.io';
-import logError from '../lib/logError';
-import { sendChatMessageNotification } from '../lib/NotificationUtils';
-import wrap from '../lib/wrapSocketMiddleware';
-import authenticate from '../lib/authenticateSocket';
-import { processChatMessageData, logChatMessage, processComposeMessageData } from '../lib/MessageUtils';
-import createMessageClient from '../lib/createMessageClient';
-import rateLimitSocketHandler from '../lib/rateLimitSocketHandler';
-import { ap, partial, always, set , _, lensProp, merge } from 'ramda';
+import io from "socket.io";
+import logError from "../lib/logError";
+import { sendChatMessageNotification } from "../lib/NotificationUtils";
+import wrap from "../lib/wrapSocketMiddleware";
+import authenticate from "../lib/authenticateSocket";
+import {
+  processChatMessageData,
+  logChatMessage,
+  processComposeMessageData
+} from "../lib/MessageUtils";
+import createMessageClient from "../lib/createMessageClient";
+import rateLimit from "../lib/rateLimit";
+import { ap, partial, always, set, _, lensProp, merge, includes } from "ramda";
+import filterBlockedMessages from "../lib/filterBlockedMessages";
 
-let makeArray = o => o instanceof Array ? o : [o];
+const makeArray = o => (o instanceof Array ? o : [o]);
 
-let handleError = function (socket, next) {
-  socket.on('error', logError);
+const handleError = function(socket, next) {
+  socket.on("error", logError);
   next();
 };
 
-let createMessageApp = async function () {
-  let userSockets = {};
+const createMessageApp = async function() {
+  const userSockets = {};
   let messageClient;
 
   // Socket management
 
-  let addUserSocket = async function (userId, socket) {
-    userSockets[userId] = socket;
-    await messageClient.subscribeToUserMessages(userId);
+  const addUserSocket = async function(user, socket) {
+    userSockets[user.id] = socket;
+    await messageClient.subscribeToUserMessages(user.id);
   };
 
-  let removeUserSocket = function (userId) {
+  const removeUserSocket = function(user) {
     // Since user can no longer receive messages at the point
     // this is called, we don't wait for the unsubscribe to complete
     // before deleting their mailbox. Anything that arrives during
     // unsubscribe will get nack'd.
-    messageClient.unsubscribeFromUserMessages(userId);
-    delete userSockets[userId];
+    messageClient.unsubscribeFromUserMessages(user.id);
+    delete userSockets[user.id];
   };
 
   // Handle messages from socket
 
-  let handleCompose = function (userId, data, cb) {
-    const composeEvent = processComposeMessageData(data);
+  const handleComposeEventReceived = async function(user, data, cb) {
+    const composeEvents = makeArray(data)
+      .map(processComposeMessageData)
+      .map(set(lensProp("senderId"), user.id));
 
-    sendMessage(
-      'composeevent',
-      data.recipientId,
-      merge(composeEvent, { senderId: userId }),
-      { expiration: 500 , persistent: false }
-    );
     cb && cb(data);
+
+    const allowedComposeEvents = await filterBlockedMessages(
+      user.id,
+      composeEvents
+    );
+
+    allowedComposeEvents.forEach(message => {
+      sendComposeEvent(message.recipientId, message);
+    });
   };
 
-  let handleChat = function (user, data, cb) {
-    let chats = makeArray(data)
+  const handleMessageReceived = async function(user, data, cb) {
+    const messages = makeArray(data)
       .map(processChatMessageData)
-      .map(set(lensProp('senderName'), user.name))
-      .map(set(lensProp('senderId'), user.id))
+      .map(set(lensProp("senderName"), user.name))
+      .map(set(lensProp("senderId"), user.id));
 
-    ap([
-      sendChatMessageNotification,
-      logChatMessage,
-      m => sendMessage('messagedata', m.recipientId, m)
-    ], chats);
+    cb && cb(messages);
 
-    cb && cb(chats);
+    const allowedMessages = await filterBlockedMessages(user.id, messages);
+
+    allowedMessages.forEach(async message => {
+      sendChatMessageNotification(message);
+      logChatMessage(message);
+      sendMessage("messagedata", message.recipientId, message);
+    });
   };
 
-  let sendMessage = function (type, recipientId, data, options) {
-    messageClient.sendMessage(recipientId, {
-      type,
-      content: data
-    }, options);
+  const sendComposeEvent = (recipientId, data) =>
+    sendMessage("composeevent", recipientId, data, {
+      expiration: 500,
+      persistent: false
+    });
+
+  const sendMessage = function(type, recipientId, data, options) {
+    messageClient.sendMessage(
+      recipientId,
+      {
+        type,
+        content: data
+      },
+      options
+    );
   };
 
   // Handle messages from queue
 
-  let handleReceiveMessage = function (message, ack, nack) {
+  let handleMessageDelivered = function(message, ack, nack) {
     let socket = userSockets[message.content.recipientId];
 
     if (socket) {
       socket.emit(message.type, message.content, ack);
     } else {
-      console.log(`Socket delivery failed. User: ${message.content.recipientId}, Message: ${message.content.id}. Requeuing...`);
+      console.log(
+        `Socket delivery failed. User: ${
+          message.content.recipientId
+        }, Message: ${message.content.id}. Requeuing...`
+      );
       nack(message);
     }
   };
 
   // Application setup
 
-  let handleConnection = async function (socket, next) {
-    let userId = socket.user.id;
-    socket.on('messagedata', rateLimitSocketHandler(socket, partial(handleChat, [socket.user])));
-    socket.on('composeevent', partial(handleCompose, [userId]));
-    socket.on('disconnect', partial(removeUserSocket, [userId]));
-    await addUserSocket(userId, socket);
-    socket.emit('ready');
+  const handleConnection = async function(socket, next) {
+    const user = socket.user;
+    socket.on("messagedata", rateLimit(partial(handleMessageReceived, [user])));
+    socket.on("composeevent", partial(handleComposeEventReceived, [user]));
+    socket.on("disconnect", partial(removeUserSocket, [user]));
+    await addUserSocket(user, socket);
+    socket.emit("ready");
   };
 
   messageClient = await createMessageClient();
-  messageClient.onMessage(handleReceiveMessage);
+  messageClient.onMessage(handleMessageDelivered);
 
-  let app = io({
+  const app = io({
     maxHttpBufferSize: 10000
   });
   app.use(handleError);
   app.use(wrap(authenticate));
-  app.on('connection', wrap(handleConnection));
+  app.on("connection", wrap(handleConnection));
   return app;
 };
 
