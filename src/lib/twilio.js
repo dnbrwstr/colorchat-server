@@ -12,8 +12,7 @@ export default {
         to: options.phoneNumber,
         from: process.env.TWILIO_NUMBER,
         body: options.code + " is your ColorChat confirmation code"
-      })
-      .done();
+      });
   },
 
   callWithConfirmationCode: function(options) {
