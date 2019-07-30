@@ -4,7 +4,6 @@
 * Postgres
 * RabbitMQ
 * Twilio account (for sending account confirmation messages)
-* Parse account (for sending push notifications)
 
 ### Getting started
 * clone repo `git clone git@github.com:dnbrwstr/colorchat-server.git`
