@@ -43,7 +43,7 @@ describe('auth', function () {
 
     it('Throws an error if no phone number is passed', function (done) {
       agent.post('/auth')
-        .send({number: '', countryCode: '1'})
+        .send({ baseNumber: '', countryCode: '1'})
         .expect(400)
         .end(done);
     });
