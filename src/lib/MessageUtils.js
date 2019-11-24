@@ -15,7 +15,8 @@ export const processChatMessageData = messageData => {
     'colorName',
     'relativeWidth',
     'relativeHeight',
-    'type'
+    'type',
+    'echoType'
   ];
 
   return pick(allowedKeys, merge(messageData, {

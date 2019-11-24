@@ -31,13 +31,23 @@ export let getText = async function (message) {
     shape = 'square';
   }
 
-  return [
-    user.name,
-    'sent you a',
+  const item = [
     sizeDescriptor && sizeDescriptor + ',',
     message.colorName,
     shape
   ].filter(i => !!i).join(' ');
+
+  if (message.type === 'default') {
+    return `${user.name} sent you a ${item}`;
+  } else if (message.type === 'picture') {
+    return `${user.name} captured a ${item} for you`
+  } else if (message.type === 'echo') {
+    if (message.echoType === 'partner') {
+      return `${user.name} echoed your ${item}`
+    } else {
+      return `${user.name} echoed a ${item}`
+    }
+  }
 };
 
 export let sendChatMessageNotification = async function (message) {
