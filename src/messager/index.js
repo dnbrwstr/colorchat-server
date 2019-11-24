@@ -62,6 +62,7 @@ const createMessageApp = async function() {
   const handleMessageReceived = async function(user, data, cb) {
     const messages = makeArray(data)
       .map(processChatMessageData)
+      .map(set(lensProp("senderAvatar"), user.avatar))
       .map(set(lensProp("senderName"), user.name))
       .map(set(lensProp("senderId"), user.id));
 
