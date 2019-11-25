@@ -37,9 +37,7 @@ export let getText = async function (message) {
     shape
   ].filter(i => !!i).join(' ');
 
-  if (message.type === 'default') {
-    return `${user.name} sent you a ${item}`;
-  } else if (message.type === 'picture') {
+  if (message.type === 'picture') {
     return `${user.name} captured a ${item} for you`
   } else if (message.type === 'echo') {
     if (message.echoType === 'partner') {
@@ -47,6 +45,8 @@ export let getText = async function (message) {
     } else {
       return `${user.name} echoed a ${item}`
     }
+  } else {
+    return `${user.name} sent you a ${item}`;
   }
 };
 
