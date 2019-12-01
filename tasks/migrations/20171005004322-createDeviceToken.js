@@ -1,5 +1,4 @@
-require('babel-register');
-require('babel-polyfill');
+require('@babel/register');
 var db = require('../../src/lib/db').default;
 var User = require('../../src/models/User').default;
 var DeviceToken = require('../../src/models/DeviceToken').default;

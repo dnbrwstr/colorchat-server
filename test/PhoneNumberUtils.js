@@ -1,7 +1,7 @@
 require('./helpers/configure');
 
 var sinon = require('sinon'),
-  expect = require('chai').expect;
+  expect = require('chai').expect,
   PhoneNumberUtils = require('../src/lib/PhoneNumberUtils');
 
 var baseNumber = '+14013911814';

@@ -1,13 +1,13 @@
 import express from 'express';
-import validate from 'express-validation';
-import Joi from 'joi';
+import {celebrate} from 'celebrate';
+import Joi from '@hapi/joi';
 import wrap from '../lib/wrapAsyncRoute';
 import authenticate from '../lib/authenticate';
 
-let app = express();
+const app = express();
 
-let rootValidator = {
-  body: {
+const validateAccountData = celebrate({
+  body: Joi.object().keys({
     deviceToken: Joi.string(),
     platform: Joi.string(),
     deviceId: Joi.string(),
@@ -15,14 +15,14 @@ let rootValidator = {
     unreadCount: Joi.number(),
     avatar: Joi.string(),
     blockedUsers: Joi.array().items(Joi.number())
-  }
-};
+  })
+});
 
 app.get('/', authenticate, wrap(async function (req, res, next) {
   res.send(req.user.serializePrivate());
 }));
 
-app.put('/', authenticate, validate(rootValidator), wrap(async function (req, res, next) {
+app.put('/', authenticate, validateAccountData, wrap(async function (req, res, next) {
   if (req.body.deviceToken) {
     await req.user.addDeviceToken({
       token: req.body.deviceToken,

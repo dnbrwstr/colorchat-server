@@ -110,7 +110,6 @@ User.prototype.blockUser = function(userId) {
 };
 
 User.prototype.unblockUser = function(userId) {
-  console.log('unblocking', userId);
   return this.update({
     blockedUsers: without([userId], this.blockedUsers)
   });

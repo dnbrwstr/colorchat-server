@@ -1,6 +1,6 @@
 import express from 'express';
-import validate from 'express-validation';
-import Joi from 'joi';
+import Joi from '@hapi/joi';
+import {celebrate} from 'celebrate';
 import twilio from '../lib/twilio';
 import wrapAsyncRoute from '../lib/wrapAsyncRoute';
 import { validate as validateNumber, normalize } from '../lib/PhoneNumberUtils';
@@ -8,16 +8,16 @@ import ConfirmationCode from '../models/ConfirmationCode';
 import User from '../models/User';
 import { RequestError } from '../lib/errors';
 
-let app = express();
+const app = express();
 
-let registerValidator = {
-  body: {
+const validateRegistrationParams = celebrate({
+  body: Joi.object({
     baseNumber: Joi.string().required().min(7).max(22),
     countryCode: Joi.string().required().min(1).max(4)
-  }
-};
+  })
+});
 
-app.post('/', validate(registerValidator), wrapAsyncRoute(async function (req, res, next) {
+app.post('/', validateRegistrationParams, wrapAsyncRoute(async function (req, res, next) {
   let { baseNumber, countryCode } = req.body;
 
   let isValidNumber = validateNumber(baseNumber, countryCode);
@@ -38,14 +38,14 @@ app.post('/', validate(registerValidator), wrapAsyncRoute(async function (req, r
   });
 }));
 
-let confirmValidator = {
-  body: {
+const validateConfirmationParams = celebrate({
+  body: Joi.object({
     phoneNumber: Joi.string().required().min(7).max(22),
     code: Joi.string().required().min(1).max(50)
-  }
-};
+  })
+});
 
-app.post('/confirm', wrapAsyncRoute(async function (req, res, next) {
+app.post('/confirm', validateConfirmationParams, wrapAsyncRoute(async function (req, res, next) {
   let { phoneNumber, code } = req.body;
 
   let confirmation = await ConfirmationCode.attemptValidationWhere({

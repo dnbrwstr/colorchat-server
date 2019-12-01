@@ -11,4 +11,4 @@
 #   echo "No secrets folder found, trying to run anyway"
 # fi
 
-exec npm start
+NODE_ENV=production node dist

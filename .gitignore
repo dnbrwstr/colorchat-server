@@ -5,3 +5,4 @@ node_modules
 .env.docker
 firebaseServiceAccount.json
 .vscode
+dist/
