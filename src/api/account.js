@@ -50,7 +50,7 @@ app.put('/', authenticate, validateAccountData, wrap(async function (req, res, n
 
 app.delete('/', authenticate, wrap(async function (req, res, next) {
   await req.user.destroy();
-  res.send(200);
+  res.send("null");
 }));
 
 const getBlocked = async user => (await user.getBlockedUsers()).map(u => u.serializePublic());
