@@ -16,7 +16,7 @@ if (notificationsEnabled) {
 }
 
 export let getText = async function (message) {
-  let user = await User.findById(message.senderId);
+  let user = await User.findByPk(message.senderId);
   let sizeDescriptor, shape;
   let w = message.width;
   let h = message.height;
@@ -53,7 +53,7 @@ export let getText = async function (message) {
 export let sendChatMessageNotification = async function (message) {
   if (!notificationsEnabled) return;
   
-  let user = await User.findById(message.recipientId);
+  let user = await User.findByPk(message.recipientId);
   let newUnreadCount = user.unreadCount + 1;
   let text = await getText(message);
   

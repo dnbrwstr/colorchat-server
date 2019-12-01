@@ -3,8 +3,8 @@ import { contains } from 'ramda';
 
 const senderIsBlocked = async (senderId, recipientId) => {
   const [sender, recipient] = await Promise.all([
-    User.findById(senderId),
-    User.findById(recipientId)
+    User.findByPk(senderId),
+    User.findByPk(recipientId)
   ]);
   const blockedUsers = recipient.blockedUsers || [];
   return contains(sender.id, blockedUsers)

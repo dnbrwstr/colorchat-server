@@ -75,7 +75,7 @@ User.wherePhoneNumberIn = async numbers => {
 User.findByToken = async token => {
   let user = await User.findOne({
     where: {
-      tokens: { $contains: [token] }
+      tokens: { [Sequelize.Op.contains]: [token] }
     }
   });
 
@@ -118,7 +118,7 @@ User.prototype.unblockUser = function(userId) {
 User.prototype.getBlockedUsers = function() {
   return User.findAll({
     where: {
-      id: { $in: this.blockedUsers }
+      id: { [Sequelize.Op.in]: this.blockedUsers }
     }
   })
 };

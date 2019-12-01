@@ -63,7 +63,7 @@ describe('auth', function () {
     });
 
     it('Updates confirmation code when additional requests are sent', function (done) {
-      ConfirmationCode.find(defaultNumberQuery).then(function (confirmation) {
+      ConfirmationCode.findOne(defaultNumberQuery).then(function (confirmation) {
         var startCode = confirmation.code;
 
         agent.post('/auth')
@@ -91,7 +91,7 @@ describe('auth', function () {
     });
 
     it('Locks code creation after 20 attempts', function (done) {
-      ConfirmationCode.find(defaultNumberQuery).then(function (confirmation) {
+      ConfirmationCode.findOne(defaultNumberQuery).then(function (confirmation) {
         return confirmation.update({
           codesCreated: 20
         });
@@ -167,7 +167,7 @@ describe('auth', function () {
     });
 
     it('Locks code after 6 failed attempts to confirm', function (done) {
-      ConfirmationCode.find(defaultNumberQuery).then(function (confirmation) {
+      ConfirmationCode.findOne(defaultNumberQuery).then(function (confirmation) {
         return confirmation.update({
           attempts: 6,
           code: '555555'
