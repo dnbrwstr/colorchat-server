@@ -4,28 +4,33 @@ import UserActionQueue from './UserActionQueue';
 import chalk from 'chalk';
 import { getMessageString } from './MessageUtils';
 
+const EXCHANGE_NAME = 'colorchat';
 const REQUEUE_TIMEOUT = 5000;
+
+const getQueueHandle = userId => `user-${userId}`;
+const getComposeQueueHandle = userId => getQueueHandle(userId) + '-compose';
+
+const encodeMessage = (message) =>  new Buffer(JSON.stringify(message));
+const decodeMessage = (message) => JSON.parse(message.content.toString());
 
 let createMessageClient = async function () {
   let messageCallbacks = [];
   let consumers = {};
-  let exchange = 'colorchat';
   let queue = new UserActionQueue();
 
   let connection = await amqp.connect(process.env.RABBITMQ_URL);
   let channel = await connection.createChannel();
 
   await channel.assertExchange(
-    exchange,
+    EXCHANGE_NAME,
     'direct',
     { durable: true, autoDelete: false }
   );
 
   function handleMessage (message) {
-    let messageData = decodeMessage(message);
-
+    const messageData = decodeMessage(message);
     const respond = once(responder => responder());
-    
+
     const nack = () => respond(() => {
       console.log(chalk.red('NACK', getMessageString(messageData.content)));
       channel.nack(message);
@@ -36,22 +41,12 @@ let createMessageClient = async function () {
       channel.ack(message);
     });
 
+    // Requeue message if it's not ACKed 
     setTimeout(nack, REQUEUE_TIMEOUT);
 
     messageCallbacks.forEach(function (cb) {
       cb(messageData, ack, nack);
     });
-  }
-
-  let getQueueHandle = userId => `user-${userId}`;
-  let getComposeBinding = userId => getQueueHandle(userId) + '-compose';
-
-  function encodeMessage (message) {
-    return new Buffer(JSON.stringify(message));
-  }
-
-  function decodeMessage (message) {
-    return JSON.parse(message.content.toString());
   }
 
   return {
@@ -61,10 +56,10 @@ let createMessageClient = async function () {
       }, opts);
 
       let patternFn = message.type === 'composeevent' ?
-        getComposeBinding : getQueueHandle;
+        getComposeQueueHandle : getQueueHandle;
 
       await channel.publish(
-        exchange,
+        EXCHANGE_NAME,
         patternFn(userId),
         encodeMessage(message),
         options
@@ -77,22 +72,19 @@ let createMessageClient = async function () {
 
     subscribeToUserMessages: function (userId) {
       return new Promise((resolve, reject) => {
-        console.log('enqueue subscribe', userId);
         queue.enqueueAction(userId, async () => {
-          console.log('start subscribe', userId);
-
           if (consumers[userId]) {
-            console.log('bailing on subscribe', userId)
+            resolve();
             return;
           }
 
           let queueHandle = getQueueHandle(userId);
           await channel.assertQueue(queueHandle);
-          await channel.bindQueue(queueHandle, exchange, queueHandle);
-          await channel.bindQueue(queueHandle, exchange, getComposeBinding(userId));
+          await channel.bindQueue(queueHandle, EXCHANGE_NAME, queueHandle);
+          await channel.bindQueue(queueHandle, EXCHANGE_NAME, getComposeQueueHandle(userId));
           let consumer = await channel.consume(queueHandle, handleMessage);
           consumers[userId] = consumer.consumerTag;
-          console.log('finish subscribe', userId)
+          console.log('subscribed', userId)
           resolve();
         })
       });
@@ -100,20 +92,17 @@ let createMessageClient = async function () {
 
     unsubscribeFromUserMessages: function (userId) {
       return new Promise((resolve, reject) => {
-        console.log('enqueue unsubscribe', userId)
         queue.enqueueAction(userId, async () => {
-          console.log('start unsubscribe', userId);
           if (!consumers[userId]) {
-            console.log('bailing on unsubscribe', userId)
             return;
           }
           let queueHandle = getQueueHandle(userId);
           await channel.cancel(consumers[userId]);
           // Compose events are only relevant to the user while
           // they're active in app.
-          await channel.unbindQueue(queueHandle, exchange, getComposeBinding(userId));
+          await channel.unbindQueue(queueHandle, EXCHANGE_NAME, getComposeQueueHandle(userId));
           consumers[userId] = null;
-          console.log('finish unsubscribe', userId)
+          console.log('unsubscribed', userId)
           resolve();
         });
       });
