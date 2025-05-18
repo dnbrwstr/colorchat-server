@@ -1,13 +1,13 @@
 version: 2
 jobs:
-  build: 
-    docker: 
+  build:
+    docker:
       - image: circleci/node:10-browsers
       - image: circleci/postgres:9.4.12-alpine
         environment:
           POSTGRES_USER: postgres
           POSTGRES_DB: colorchat-server-test
-      - image: rabbitmq:3.5.6-management
+      - image: rabbitmq:4.1.0-management
     environment:
       DEFAULT_REGION: US
       DATABASE_URL: postgres://postgres@127.0.0.1:5432/colorchat-server-test
@@ -32,12 +32,12 @@ workflows:
   build-and-deploy:
     jobs:
       - build:
-          filters: 
+          filters:
             branches:
               only:
                 - master
       - deploy:
-          filters: 
+          filters:
             branches:
               only:
                 - master
