@@ -1,7 +1,7 @@
 import Color from "color";
 import createKDTree from "static-kdtree";
-import colorData from "../data/colors.json";
 
+const colorData = require(__dirname + "/../data/colors.json");
 const colorTree = createKDTree(colorData.map(([r, g, b]) => [r, g, b]));
 
 export default function (hexColor) {
