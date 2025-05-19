@@ -1,12 +1,11 @@
 import express from 'express';
 import Joi from '@hapi/joi';
-import {celebrate} from 'celebrate';
+import { celebrate } from 'celebrate';
 import twilio from '../lib/twilio';
 import wrapAsyncRoute from '../lib/wrapAsyncRoute';
 import { validate as validateNumber, normalize } from '../lib/PhoneNumberUtils';
-import ConfirmationCode from '../models/ConfirmationCode';
 import User from '../models/User';
-import { RequestError } from '../lib/errors';
+import { PermissionsError, RequestError } from '../lib/errors';
 
 const app = express();
 
@@ -26,15 +25,13 @@ app.post('/', validateRegistrationParams, wrapAsyncRoute(async function (req, re
   }
 
   let phoneNumber = normalize(`+${countryCode}${baseNumber}`);
-  let confirmation = await ConfirmationCode.createOrUpdateFromNumber(phoneNumber);
 
   await twilio.sendConfirmationCode({
-    code: confirmation.code,
-    phoneNumber: confirmation.phoneNumber
+    phoneNumber: phoneNumber
   });
 
   res.json({
-    phoneNumber: confirmation.phoneNumber
+    phoneNumber: phoneNumber
   });
 }));
 
@@ -48,20 +45,30 @@ const validateConfirmationParams = celebrate({
 app.post('/confirm', validateConfirmationParams, wrapAsyncRoute(async function (req, res, next) {
   let { phoneNumber, code } = req.body;
 
-  let confirmation = await ConfirmationCode.attemptValidationWhere({
+  let confirmation = await twilio.checkConfirmationCode({
     phoneNumber: phoneNumber,
-    code: code.toString()
+    code: code
   });
 
-  let user = await User.createOrUpdateFromConfirmation(confirmation);
+  // Possible statuses:
+  // pending, approved, canceled, max_attempts_reached, deleted, failed or expired
+  if (confirmation.status === 'approved') {
+    let user = await User.createOrUpdateFromPhoneNumber(phoneNumber);
+    res.json({
+      user: {
+        id: user.id,
+        token: user.tokens.pop(),
+        phoneNumber: user.phoneNumber
+      }
+    });
+    return;
+  } else if (confirmation.status === 'pending') {
+    throw new PermissionsError('Invalid confirmation code');
+  } else if (confirmation.status === 'max_attempts_reached') {
+    throw new PermissionsError('Too many confirmation attempts');
+  }
 
-  res.json({
-    user: {
-      id: user.id,
-      token: user.tokens.pop(),
-      phoneNumber: user.phoneNumber
-    }
-  });
+  throw new PermissionsError('An unknown error occurred')
 }));
 
 export default app;

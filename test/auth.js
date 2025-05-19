@@ -6,7 +6,6 @@ var sinon = require('sinon'),
   Promise = require('bluebird'),
   app = require('../src/api').default,
   db = require('../src/lib/db').default,
-  ConfirmationCode = require('../src/models/ConfirmationCode').default,
   User = require('../src/models/User').default,
   twilio = require('../src/lib/twilio').default,
   mapTimes = require('../src/lib/FnUtils').mapTimes;
@@ -18,64 +17,40 @@ var defaultNumberData = {
 
 var defaultPhoneNumber = '+14013911814';
 
-var defaultNumberQuery = {
-  phoneNumber: defaultPhoneNumber
-};
-
 describe('auth', function () {
   var agent;
+  var sendConfirmationCodeStub;
+  var checkConfirmationCodeStub;
 
   before(function (done) {
     agent = request.agent(app);
+    sendConfirmationCodeStub = sinon.stub(twilio, 'sendConfirmationCode').resolves()
+    checkConfirmationCodeStub = sinon.stub(twilio, 'checkConfirmationCode').resolves()
+
     db.options.logging = null;
 
-    db.sync({ force: true}).then(function () {
+    db.sync({ force: true }).then(function () {
       done();
     });
   });
 
   describe('/auth', function () {
-    var sendConfirmationCodeStub;
-
-    before(function () {
-      sendConfirmationCodeStub = sinon.stub(twilio, 'sendConfirmationCode').resolves();
-    });
-
     it('Throws an error if no phone number is passed', function (done) {
       agent.post('/auth')
-        .send({ baseNumber: '', countryCode: '1'})
+        .send({ baseNumber: '', countryCode: '1' })
         .expect(400)
         .end(done);
     });
 
-    it('Creates a ConfirmationCode if a message is sent successfully', function (done) {
+    it('Attempts to verify if a message is sent successfully', function (done) {
       agent.post('/auth')
         .send(defaultNumberData)
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
-
-          return ConfirmationCode.findAll().then(function (confirmations) {
-            expect(confirmations.length).to.equal(1);
-            done();
-          });
+          expect(sendConfirmationCodeStub.calledOnce).to.equal(true);
+          done();
         });
-    });
-
-    it('Updates confirmation code when additional requests are sent', function (done) {
-      ConfirmationCode.findOne(defaultNumberQuery).then(function (confirmation) {
-        var startCode = confirmation.code;
-
-        agent.post('/auth')
-          .send(defaultNumberData)
-          .end(function () {
-            ConfirmationCode.findAll({ where: defaultNumberQuery }).then(function (res) {
-              expect(res.length).to.equal(1);
-              expect(res[0].code).to.not.equal(startCode);
-              done();
-            });
-          });
-      });
     });
 
     it('Throws an error if the Twilio request fails', function (done) {
@@ -85,52 +60,38 @@ describe('auth', function () {
         .send(defaultNumberData)
         .expect(500)
         .end(function (err, res) {
-          sendConfirmationCodeStub.restore();
+          sendConfirmationCodeStub.resolves();
           done(err);
         });
-    });
-
-    it('Locks code creation after 20 attempts', function (done) {
-      ConfirmationCode.findOne(defaultNumberQuery).then(function (confirmation) {
-        return confirmation.update({
-          codesCreated: 20
-        });
-      }).then(function () {
-        return agent.post('/auth')
-          .send(defaultNumberData);
-      }).then(function (res) {
-        expect(res.status).to.equal(403);
-        done();
-      })
     });
   });
 
   describe('/auth/confirm', function () {
     beforeEach(function (done) {
-      db.sync({ force: true}).then(function () {
-        ConfirmationCode.bulkCreate([{
-          phoneNumber: defaultPhoneNumber,
-          code: '555555'
-        }, {
-          phoneNumber: '+15555555',
-          code: '666666'
-        }]).then(function () {
-          done();
-        });
-      });
+      db.sync({ force: true }).then(function () { done(); });
     });
 
     it('Throws an error if invalid credentials are submitted', function (done) {
+      checkConfirmationCodeStub.resolves({
+        status: 'pending'
+      });
+      twilio.checkConfirmationCode().then(console.log.bind(console));
       agent.post('/auth/confirm')
         .send({
           phoneNumber: defaultPhoneNumber,
           code: '555554'
         })
         .expect(403)
-        .end(done);
+        .end(() => {
+          checkConfirmationCodeStub.resolves()
+          done();
+        });
     });
 
     it('Creates a new user if valid credentials are submitted', function (done) {
+      checkConfirmationCodeStub.resolves({
+        status: 'approved'
+      });
       agent.post('/auth/confirm')
         .send({
           phoneNumber: defaultPhoneNumber,
@@ -139,7 +100,6 @@ describe('auth', function () {
         .expect(200)
         .end(function (err, res) {
           if (err) throw err;
-
           expect(res.body).to.have.key('user');
           expect(res.body.user).to.have.all.keys(['token', 'phoneNumber', 'id']);
           done();
@@ -163,24 +123,6 @@ describe('auth', function () {
               done();
             });
           });
-      });
-    });
-
-    it('Locks code after 6 failed attempts to confirm', function (done) {
-      ConfirmationCode.findOne(defaultNumberQuery).then(function (confirmation) {
-        return confirmation.update({
-          attempts: 6,
-          code: '555555'
-        });
-      }).then(function () {
-        return agent.post('/auth/confirm')
-          .send({
-            phoneNumber: defaultPhoneNumber,
-            code: '555555'
-          });
-      }).then(function (res) {
-        expect(res.status).to.equal(403);
-        done();
       });
     });
   });

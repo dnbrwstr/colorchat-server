@@ -38,12 +38,12 @@ let User = db.define("User", {
   }
 });
 
-User.createOrUpdateFromConfirmation = async confirmation => {
+User.createOrUpdateFromPhoneNumber = async (phoneNumber) => {
   let tokenBuffer = await crypto.randomBytesAsync(64);
   let token = tokenBuffer.toString("hex");
 
   let user = await User.findOne({
-    where: { phoneNumber: confirmation.phoneNumber }
+    where: { phoneNumber: phoneNumber }
   });
 
   if (user) {
@@ -52,7 +52,7 @@ User.createOrUpdateFromConfirmation = async confirmation => {
     });
   } else {
     user = await User.create({
-      phoneNumber: confirmation.phoneNumber,
+      phoneNumber: phoneNumber,
       tokens: [token]
     });
   }
