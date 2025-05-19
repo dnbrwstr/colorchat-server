@@ -25,7 +25,7 @@ jobs:
     machine:
       enabled: true
     steps:
-      - run: "ssh -p $SSH_PORT core@colorchat-server.color.slow.so 'sudo systemctl restart colorchat'"
+      - run: "ssh -p $SSH_PORT ec2-user@colorchat-server.soft.works 'sudo systemctl restart colorchat'"
 
 workflows:
   version: 2
