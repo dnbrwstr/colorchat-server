@@ -3,7 +3,7 @@ import logError from './logError';
 import User from '../models/User';
 import DeviceToken from '../models/DeviceToken';
 
-const notificationsEnabled = 
+const notificationsEnabled =
   process.env.NOTIFICATIONS_ENABLED === "1" &&
   process.env.FIREBASE_SERVICE_ACCOUNT_FILE;
 
@@ -52,13 +52,13 @@ export let getText = async function (message) {
 
 export let sendChatMessageNotification = async function (message) {
   if (!notificationsEnabled) return;
-  
+
   let user = await User.findByPk(message.recipientId);
   let newUnreadCount = user.unreadCount + 1;
   let text = await getText(message);
-  
+
   let tokens = await DeviceToken
-    .findAll({ where: { UserId: user.id }});
+    .findAll({ where: { UserId: user.id } });
 
   const tokenPromises = tokens.map(async t => {
     let payload = {
@@ -71,12 +71,16 @@ export let sendChatMessageNotification = async function (message) {
       data: {
         type: 'message',
         message: JSON.stringify(message)
+      },
+      token: t.token,
+      apns: {
+        payload: {
+          aps: {
+            'content-available': 1
+          }
+        }
       }
     };
-
-    let options = {
-      contentAvailable: true
-    };  
 
     if (t.platform === 'ios') {
       payload.notification.body = text;
@@ -85,9 +89,7 @@ export let sendChatMessageNotification = async function (message) {
     }
 
     try {
-      let result = await admin.messaging().sendToDevice(t.token, payload, options); 
-      let allResults = result.results;
-      allResults.forEach(r => r.error && logError(r.error));
+      await admin.messaging().send(payload);
     } catch (error) {
       logError(error);
     }
