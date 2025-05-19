@@ -3,7 +3,7 @@ import logError from './logError';
 import User from '../models/User';
 import DeviceToken from '../models/DeviceToken';
 
-const notificationsEnabled =
+const notificationsEnabled = 
   process.env.NOTIFICATIONS_ENABLED === "1" &&
   process.env.FIREBASE_SERVICE_ACCOUNT_FILE;
 
@@ -58,35 +58,35 @@ export let sendChatMessageNotification = async function (message) {
   let text = await getText(message);
 
   let tokens = await DeviceToken
-    .findAll({ where: { UserId: user.id } });
+    .findAll({ where: { UserId: user.id }});
 
   const tokenPromises = tokens.map(async t => {
     let payload = {
+      token: t.token,
       notification: {
-        badge: newUnreadCount.toString(),
-        sound: 'cheering.caf',
-        color: message.color,
-        icon: 'ic_notification'
+        body: text,
       },
       data: {
         type: 'message',
         message: JSON.stringify(message)
       },
-      token: t.token,
       apns: {
         payload: {
           aps: {
-            'content-available': 1
+            'content-available': 1,
+            badge: newUnreadCount,
+            sound: 'cheering.caf',
           }
+        }
+      },
+      android: {
+        notification: {
+          color: message.color,
+          icon: 'ic_notification',
+          sound: 'cheering.caf',
         }
       }
     };
-
-    if (t.platform === 'ios') {
-      payload.notification.body = text;
-    } else {
-      payload.notification.text = text;
-    }
 
     try {
       await admin.messaging().send(payload);
