@@ -3,7 +3,7 @@ import logError from './logError';
 import User from '../models/User';
 import DeviceToken from '../models/DeviceToken';
 
-const notificationsEnabled = 
+const notificationsEnabled =
   process.env.NOTIFICATIONS_ENABLED === "1" &&
   process.env.FIREBASE_SERVICE_ACCOUNT_FILE;
 
@@ -58,7 +58,7 @@ export let sendChatMessageNotification = async function (message) {
   let text = await getText(message);
 
   let tokens = await DeviceToken
-    .findAll({ where: { UserId: user.id }});
+    .findAll({ where: { UserId: user.id } });
 
   const tokenPromises = tokens.map(async t => {
     let payload = {
@@ -89,6 +89,7 @@ export let sendChatMessageNotification = async function (message) {
     };
 
     try {
+      console.log('sneding notification', payload);
       await admin.messaging().send(payload);
     } catch (error) {
       logError(error);
