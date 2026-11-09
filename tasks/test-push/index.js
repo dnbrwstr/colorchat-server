@@ -1,2 +1,2 @@
 require('../configure');
-require('./testPushNotification')();
+require('./testPushNotification').default();

@@ -1,5 +1,5 @@
 import minimist from 'minimist';
-import { sendChatMessageNotification } from '../src/lib/NotificationUtils';
+import { sendChatMessageNotification } from '../../src/lib/NotificationUtils';
 
 const args = require('minimist')(process.argv.slice(2));
 
@@ -21,7 +21,7 @@ const testPushNotification = () => {
     recipientId: toUserId,
     width: 75 + Math.floor(Math.random() * 200),
     height: 75 + Math.floor(Math.random() * 300),
-    color: '#' + ('000000' + Math.floor(Math.random()*16777215).toString(16)).slice(-6)
+    color: '#' + ('000000' + Math.floor(Math.random() * 16777215).toString(16)).slice(-6)
   };
 
   return sendChatMessageNotification(message);
