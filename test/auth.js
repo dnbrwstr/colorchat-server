@@ -126,4 +126,65 @@ describe('auth', function () {
       });
     });
   });
+
+  describe('review login', function () {
+    var reviewNumberData = { baseNumber: '4015550100', countryCode: '1' };
+    var reviewPhoneNumber = '+14015550100';
+
+    beforeEach(function (done) {
+      process.env.REVIEW_PHONE_NUMBER = reviewPhoneNumber;
+      process.env.REVIEW_CODE = '246810';
+      sendConfirmationCodeStub.resetHistory();
+      checkConfirmationCodeStub.resetHistory();
+      db.sync({ force: true }).then(function () { done(); });
+    });
+
+    afterEach(function () {
+      delete process.env.REVIEW_PHONE_NUMBER;
+      delete process.env.REVIEW_CODE;
+    });
+
+    it('Does not send an SMS to the review number', function (done) {
+      agent.post('/auth')
+        .send(reviewNumberData)
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+          expect(res.body.phoneNumber).to.equal(reviewPhoneNumber);
+          expect(sendConfirmationCodeStub.called).to.equal(false);
+          done();
+        });
+    });
+
+    it('Logs in with the review code without calling Twilio', function (done) {
+      agent.post('/auth/confirm')
+        .send({ phoneNumber: reviewPhoneNumber, code: '246810' })
+        .expect(200)
+        .end(function (err, res) {
+          if (err) return done(err);
+          expect(res.body.user.phoneNumber).to.equal(reviewPhoneNumber);
+          expect(checkConfirmationCodeStub.called).to.equal(false);
+          done();
+        });
+    });
+
+    it('Rejects a wrong code for the review number', function (done) {
+      agent.post('/auth/confirm')
+        .send({ phoneNumber: reviewPhoneNumber, code: '000000' })
+        .expect(403)
+        .end(done);
+    });
+
+    it('Uses Twilio as normal when review login is not configured', function (done) {
+      delete process.env.REVIEW_CODE;
+      agent.post('/auth')
+        .send(reviewNumberData)
+        .expect(200)
+        .end(function (err) {
+          if (err) return done(err);
+          expect(sendConfirmationCodeStub.calledOnce).to.equal(true);
+          done();
+        });
+    });
+  });
 });

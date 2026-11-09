@@ -6,6 +6,7 @@ import wrapAsyncRoute from '../lib/wrapAsyncRoute';
 import { validate as validateNumber, normalize } from '../lib/PhoneNumberUtils';
 import User from '../models/User';
 import { PermissionsError, RequestError } from '../lib/errors';
+import { isReviewNumber, isValidReviewCode } from '../lib/reviewLogin';
 
 const app = express();
 
@@ -26,9 +27,11 @@ app.post('/', validateRegistrationParams, wrapAsyncRoute(async function (req, re
 
   let phoneNumber = normalize(`+${countryCode}${baseNumber}`);
 
-  await twilio.sendConfirmationCode({
-    phoneNumber: phoneNumber
-  });
+  if (!isReviewNumber(phoneNumber)) {
+    await twilio.sendConfirmationCode({
+      phoneNumber: phoneNumber
+    });
+  }
 
   res.json({
     phoneNumber: phoneNumber
@@ -45,10 +48,12 @@ const validateConfirmationParams = celebrate({
 app.post('/confirm', validateConfirmationParams, wrapAsyncRoute(async function (req, res, next) {
   let { phoneNumber, code } = req.body;
 
-  let confirmation = await twilio.checkConfirmationCode({
-    phoneNumber: phoneNumber,
-    code: code
-  });
+  let confirmation = isReviewNumber(phoneNumber)
+    ? { status: isValidReviewCode(code) ? 'approved' : 'pending' }
+    : await twilio.checkConfirmationCode({
+      phoneNumber: phoneNumber,
+      code: code
+    });
 
   // Possible statuses:
   // pending, approved, canceled, max_attempts_reached, deleted, failed or expired
